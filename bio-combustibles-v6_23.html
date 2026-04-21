@@ -1,0 +1,3193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Bio Combustibles — BioAmbientalistik</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --verde-oscuro:#1e4019; --verde:#2d5a27; --verde-medio:#3a7032; --verde-claro:#4d8f3e;
+  --verde-tenue:#e8f2e6; --verde-tenue2:#d4e8cf;
+  --gris-oscuro:#3a3a3a; --gris:#5a5a5a; --gris-claro:#8a8a8a;
+  --gris-borde:#d8e4d3; --bg:#f0f3ee; --bg-card:#ffffff;
+  --rojo:#c0392b; --rojo-t:#fdf0ef; --rojo-b:#f5c2be;
+  --amarillo:#c97d10; --amarillo-t:#fef8ed; --amarillo-b:#f0d5a0;
+  --text:#252525; --text-sub:#6b7a68;
+  --shadow-sm:0 1px 6px rgba(30,64,25,.07); --shadow:0 3px 18px rgba(30,64,25,.10);
+  --r:14px; --r-sm:9px; --sidebar-w:258px; --topbar-h:58px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;}
+
+/* ── LOGIN ── */
+#login-screen{min-height:100vh;display:flex;background:var(--verde-oscuro);position:relative;overflow:hidden;}
+.li-deco{position:absolute;inset:0;background:radial-gradient(ellipse 60% 70% at 80% 110%,rgba(77,143,62,.22) 0%,transparent 60%),radial-gradient(ellipse 40% 50% at -10% -10%,rgba(77,143,62,.12) 0%,transparent 60%);pointer-events:none;}
+.li-left{flex:1;display:flex;align-items:center;justify-content:center;padding:60px 48px;}
+.li-brand-logo img{height:66px;object-fit:contain;filter:brightness(0)invert(1);opacity:.88;margin-bottom:22px;display:block;}
+.li-appname{font-family:'Nunito',sans-serif;font-weight:900;font-size:42px;color:white;line-height:1;margin-bottom:6px;letter-spacing:-1px;}
+.li-appname span{color:rgba(255,255,255,.35);}
+.li-company{font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:32px;}
+.li-desc{font-size:13px;color:rgba(255,255,255,.35);line-height:1.8;max-width:320px;}
+.li-right{width:460px;background:white;display:flex;align-items:center;justify-content:center;padding:52px 46px;}
+.li-form{width:100%;}
+.li-title{font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;color:var(--verde);margin-bottom:4px;}
+.li-sub{font-size:13px;color:var(--text-sub);margin-bottom:26px;}
+.lbl{display:block;font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-sub);margin-bottom:6px;}
+.inp{width:100%;padding:12px 15px;border:2px solid var(--gris-borde);border-radius:var(--r-sm);font-family:'Nunito Sans',sans-serif;font-size:14px;color:var(--text);background:#fafcf9;transition:all .2s;outline:none;margin-bottom:14px;}
+.inp:focus{border-color:var(--verde);background:white;box-shadow:0 0 0 4px rgba(45,90,39,.08);}
+.sel{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7a68' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:38px;cursor:pointer;}
+.btn-login{width:100%;padding:13px;background:var(--verde);color:white;border:none;border-radius:var(--r-sm);font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:all .2s;margin-top:4px;}
+.btn-login:hover{background:var(--verde-medio);transform:translateY(-1px);box-shadow:0 6px 20px rgba(45,90,39,.28);}
+.li-err{display:none;background:var(--rojo-t);border:1.5px solid var(--rojo-b);border-radius:var(--r-sm);padding:9px 13px;font-size:13px;color:var(--rojo);font-weight:600;text-align:center;margin-top:10px;}
+.li-hints{margin-top:22px;padding-top:18px;border-top:1px solid var(--gris-borde);}
+.li-hints-t{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-sub);margin-bottom:8px;}
+.hint-row{display:flex;gap:8px;align-items:center;margin-bottom:5px;}
+.hbdg{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;background:var(--verde);color:white;}
+.hbdg.d{background:var(--gris-oscuro);}
+.hcred{font-size:11px;color:var(--gris-claro);font-family:monospace;}
+
+/* ── APP ── */
+#app{display:none;min-height:100vh;}
+.topbar{position:fixed;top:0;left:0;right:0;height:var(--topbar-h);background:var(--verde-oscuro);display:flex;align-items:center;padding:0 20px;gap:14px;z-index:200;box-shadow:0 2px 16px rgba(0,0,0,.28);}
+.hbtn{width:36px;height:36px;border-radius:8px;border:none;background:rgba(255,255,255,.1);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:background .2s;flex-shrink:0;}
+.hbtn:hover{background:rgba(255,255,255,.18);}
+.hb-l{width:17px;height:2px;background:rgba(255,255,255,.85);border-radius:2px;transition:all .3s;}
+.hbtn.open .hb-l:nth-child(1){transform:translateY(7px)rotate(45deg);}
+.hbtn.open .hb-l:nth-child(2){opacity:0;transform:scaleX(0);}
+.hbtn.open .hb-l:nth-child(3){transform:translateY(-7px)rotate(-45deg);}
+.tb-logo img{height:27px;object-fit:contain;filter:brightness(0)invert(1);opacity:.88;}
+.tb-sep{width:1px;height:22px;background:rgba(255,255,255,.15);}
+.tb-name{font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;color:white;letter-spacing:-.3px;}
+.tb-name span{color:rgba(255,255,255,.35);font-weight:700;}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:11px;}
+.tb-role{font-family:'Nunito',sans-serif;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;padding:3px 11px;border-radius:20px;background:rgba(255,255,255,.12);color:white;border:1px solid rgba(255,255,255,.18);}
+.tb-user{font-size:12px;color:rgba(255,255,255,.45);}
+.btn-out{padding:5px 12px;background:transparent;border:1.5px solid rgba(255,255,255,.18);border-radius:7px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:rgba(255,255,255,.55);cursor:pointer;transition:all .2s;}
+.btn-out:hover{border-color:rgba(255,255,255,.5);color:white;}
+
+/* ── SIDEBAR ── */
+.sb-overlay{position:fixed;inset:0;background:rgba(0,0,0,0);z-index:149;pointer-events:none;transition:background .3s;}
+.sb-overlay.vis{background:rgba(0,0,0,.4);pointer-events:all;}
+.sidebar{position:fixed;top:var(--topbar-h);left:0;bottom:0;width:var(--sidebar-w);background:var(--verde-oscuro);z-index:150;transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden;}
+.sidebar.open{transform:translateX(0);}
+.sb-user{padding:18px 18px 14px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sb-user-role{font-family:'Nunito',sans-serif;font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.38);margin-bottom:3px;}
+.sb-user-name{font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;color:white;}
+.sb-nav{flex:1;overflow-y:auto;padding:10px 8px;scrollbar-width:none;}
+.sb-nav::-webkit-scrollbar{display:none;}
+.sb-sec{font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.28);padding:12px 10px 5px;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:9px;cursor:pointer;transition:all .18s;margin-bottom:2px;position:relative;}
+.sb-item:hover{background:rgba(255,255,255,.07);}
+.sb-item.active{background:rgba(255,255,255,.12);box-shadow:inset 3px 0 0 rgba(255,255,255,.5);}
+.sb-ico{font-size:16px;width:24px;text-align:center;flex-shrink:0;}
+.sb-lbl{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,.72);flex:1;}
+.sb-item.active .sb-lbl{color:white;}
+.sb-bdg{font-size:10px;font-weight:800;font-family:'Nunito',sans-serif;background:var(--rojo);color:white;padding:2px 7px;border-radius:20px;}
+.sb-bdg.am{background:var(--amarillo);}
+.sb-bot{padding:12px 8px;border-top:1px solid rgba(255,255,255,.08);}
+.sb-out{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:9px;cursor:pointer;transition:all .18s;}
+.sb-out:hover{background:rgba(255,0,0,.1);}
+.sb-out-lbl{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,.4);}
+
+/* ── MAIN ── */
+.main-wrap{padding-top:var(--topbar-h);min-height:100vh;}
+.main{padding:22px;max-width:1120px;margin:0 auto;width:100%;}
+.page{display:none;}
+.page.active{display:block;animation:fadeIn .2s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.pg-hd{margin-bottom:20px;}
+.pg-title{font-family:'Nunito',sans-serif;font-weight:900;font-size:21px;color:var(--text);letter-spacing:-.4px;margin-bottom:3px;}
+.pg-sub{font-size:12px;color:var(--text-sub);}
+
+/* ── CARDS ── */
+.card{background:var(--bg-card);border-radius:var(--r);border:1.5px solid var(--gris-borde);box-shadow:var(--shadow-sm);padding:20px;margin-bottom:16px;}
+.card-title{font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;color:var(--text);margin-bottom:3px;}
+.card-sub{font-size:12px;color:var(--text-sub);margin-bottom:16px;}
+.card-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px;}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
+.stat{background:white;border:1.5px solid var(--gris-borde);border-radius:var(--r);padding:15px 17px;box-shadow:var(--shadow-sm);}
+.stat-lbl{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-sub);margin-bottom:7px;}
+.stat-val{font-family:'Nunito',sans-serif;font-size:30px;font-weight:900;color:var(--verde);line-height:1;letter-spacing:-1px;}
+.stat-val.r{color:var(--rojo);} .stat-val.a{color:var(--amarillo);}
+.stat-s{font-size:11px;color:var(--text-sub);margin-top:3px;}
+
+/* ── SECTION LABEL ── */
+.sec-lbl{font-family:'Nunito',sans-serif;font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--verde-medio);margin:18px 0 11px;display:flex;align-items:center;gap:10px;}
+.sec-lbl::after{content:'';flex:1;height:1px;background:var(--gris-borde);}
+
+/* ── FORM ── */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.fg3{grid-template-columns:1fr 1fr 1fr;}
+.fgg{display:flex;flex-direction:column;gap:6px;}
+.fgg .lbl,.fgg .inp{margin:0;}
+
+/* ── BUTTONS ── */
+.btn-row{display:flex;gap:9px;margin-top:18px;justify-content:flex-end;align-items:center;flex-wrap:wrap;}
+.btn-ghost{padding:9px 18px;background:transparent;border:1.5px solid var(--gris-borde);border-radius:var(--r-sm);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:var(--gris);cursor:pointer;transition:all .2s;}
+.btn-ghost:hover{border-color:var(--gris);background:#f5f5f5;}
+.btn-main{padding:9px 22px;background:var(--verde);border:none;border-radius:var(--r-sm);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:white;cursor:pointer;transition:all .2s;}
+.btn-main:hover{background:var(--verde-medio);transform:translateY(-1px);box-shadow:0 4px 14px rgba(45,90,39,.25);}
+.btn-danger{padding:9px 18px;background:transparent;border:1.5px solid var(--rojo-b);border-radius:var(--r-sm);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:var(--rojo);cursor:pointer;transition:all .2s;}
+.btn-danger:hover{background:var(--rojo-t);}
+.btn-excel{padding:9px 22px;background:#1d6f42;border:none;border-radius:var(--r-sm);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:white;cursor:pointer;transition:all .2s;}
+.btn-excel:hover{background:#155c35;transform:translateY(-1px);}
+
+/* ── STATION LIST ── */
+.est-opt{padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--gris-borde);transition:all .18s;}
+.est-opt:last-child{border-bottom:none;}
+.est-opt:hover{background:var(--verde-tenue);}
+.est-opt.active{background:var(--verde-tenue);box-shadow:inset 3px 0 0 var(--verde);}
+.est-opt-name{font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;color:var(--verde);}
+.est-opt.active .est-opt-name{color:var(--verde-oscuro);}
+.est-opt-precios{font-size:11px;color:var(--text-sub);margin-top:2px;}
+
+/* ── PHOTO UPLOAD ── */
+.photo-up{border:2px dashed var(--gris-borde);border-radius:var(--r-sm);padding:18px 14px;text-align:center;cursor:pointer;transition:all .2s;background:#fafcf9;}
+.photo-up:hover{border-color:var(--verde);background:var(--verde-tenue);}
+.pup-ico{font-size:22px;margin-bottom:5px;}
+.pup-txt{font-size:12px;color:var(--text-sub);font-weight:600;}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{font-family:'Nunito',sans-serif;font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-sub);padding:9px 12px;text-align:left;border-bottom:2px solid var(--gris-borde);white-space:nowrap;background:#fafcf9;}
+tbody tr{border-bottom:1px solid var(--gris-borde);transition:background .15s;}
+tbody tr:hover{background:#f8fbf6;}
+tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
+.tu{font-family:'Nunito',sans-serif;font-weight:900;font-size:13px;color:var(--verde);}
+
+
+/* ── BADGES ── */
+.bdg{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:800;font-family:'Nunito',sans-serif;white-space:nowrap;}
+.bdg-ok{background:#e8f5e4;color:#2d7a27;}
+.bdg-r{background:var(--rojo-t);color:var(--rojo);border:1px solid var(--rojo-b);}
+.bdg-a{background:var(--amarillo-t);color:var(--amarillo);border:1px solid var(--amarillo-b);}
+.bdg-g{background:#f0f2ee;color:var(--gris);}
+.bdg-inact{background:#f0f0f0;color:#aaa;}
+
+/* ── STEPS ── */
+.steps{display:flex;align-items:center;margin-bottom:22px;}
+.step-item{display:flex;align-items:center;gap:7px;}
+.step-c{width:27px;height:27px;border-radius:50%;background:var(--gris-borde);color:var(--gris-claro);font-family:'Nunito',sans-serif;font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .3s;flex-shrink:0;}
+.step-c.act{background:var(--verde);color:white;box-shadow:0 0 0 4px rgba(45,90,39,.12);}
+.step-c.done{background:var(--verde-claro);color:white;}
+.step-n{font-size:11px;font-weight:700;color:var(--text-sub);white-space:nowrap;}
+.step-n.act{color:var(--verde);}
+.step-line{flex:1;height:2px;background:var(--gris-borde);margin:0 8px;min-width:14px;}
+
+/* ── ASIGNACIÓN BOX ── */
+.asig-box{background:var(--verde-oscuro);border-radius:var(--r-sm);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.asig-lbl{font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:3px;}
+.asig-val{font-family:'Nunito',sans-serif;font-weight:900;font-size:26px;color:white;letter-spacing:-1px;}
+.asig-sub{font-size:10px;color:rgba(255,255,255,.38);margin-top:2px;}
+.asig-ico{font-size:32px;opacity:.45;}
+
+/* ── AUTORIZACIÓN GUARDADA ── */
+.aut-doc{background:white;border-radius:var(--r);overflow:hidden;border:1.5px solid var(--gris-borde);box-shadow:var(--shadow);}
+.aut-doc-hd{background:var(--verde-oscuro);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;}
+.aut-doc-logo img{height:30px;object-fit:contain;filter:brightness(0)invert(1);opacity:.85;}
+.aut-doc-right{text-align:right;}
+.aut-doc-name{font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;color:white;}
+.aut-doc-folio{font-size:10px;color:rgba(255,255,255,.48);margin-top:2px;}
+.aut-doc-folio-big{font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;color:white;letter-spacing:1px;margin-top:4px;}
+.aut-doc-folio-sub{font-size:10px;color:rgba(255,255,255,.48);margin-top:2px;}
+.aut-doc-body{padding:18px 20px;}
+.aut-strip{background:var(--verde-tenue);border:1px solid var(--verde-tenue2);border-radius:var(--r-sm);padding:14px 16px;display:flex;align-items:flex-start;gap:12px;margin-bottom:15px;}
+.aut-strip-ico{font-size:22px;margin-top:2px;}
+.aut-strip-txt{font-size:12px;color:var(--verde);font-weight:600;line-height:1.5;}
+.aut-strip-txt .unit-big{font-family:'Nunito',sans-serif;font-weight:900;font-size:22px;color:var(--verde-oscuro);display:block;line-height:1.1;margin-bottom:4px;}
+.aut-strip-txt .op-big{font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;color:var(--verde);display:block;margin-bottom:2px;}
+.aut-strip-txt .op-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-sub);}
+.aut-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;margin-bottom:14px;}
+.aut-field label{font-size:8px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-sub);display:block;margin-bottom:2px;}
+.aut-field span{font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:var(--text);}
+.aut-doc-ft{background:#f8fbf6;border-top:1px solid var(--gris-borde);padding:9px 20px;font-size:9px;color:var(--text-sub);line-height:1.5;}
+.cap-hint{margin-top:10px;padding:8px 12px;background:#f8fbf6;border:1px solid var(--gris-borde);border-radius:var(--r-sm);font-size:11px;color:var(--text-sub);font-weight:600;text-align:center;}
+
+/* ── FOCOS ── */
+.foco{border-left:4px solid var(--rojo);background:var(--rojo-t);border-radius:0 var(--r-sm) var(--r-sm) 0;padding:12px 15px;margin-bottom:9px;display:flex;gap:10px;}
+.foco.am{border-left-color:var(--amarillo);background:var(--amarillo-t);}
+.foco-ico{font-size:16px;flex-shrink:0;margin-top:1px;}
+.foco-t{font-family:'Nunito',sans-serif;font-weight:900;font-size:13px;color:var(--rojo);margin-bottom:2px;}
+.foco.am .foco-t{color:var(--amarillo);}
+.foco-d{font-size:12px;color:var(--text);line-height:1.45;}
+.foco-m{font-size:10px;color:var(--text-sub);margin-top:4px;font-style:italic;}
+
+/* ── TIMELINE ── */
+.tl-item{display:flex;gap:11px;margin-bottom:14px;}
+.tl-dot{width:9px;height:9px;border-radius:50%;background:var(--verde);margin-top:4px;flex-shrink:0;position:relative;}
+.tl-dot::after{content:'';position:absolute;left:3px;top:9px;width:2px;height:calc(100% + 6px);background:var(--gris-borde);}
+.tl-item:last-child .tl-dot::after{display:none;}
+.tl-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;}
+.tl-act{font-weight:700;font-size:13px;}
+.tl-time{font-size:10px;color:var(--text-sub);}
+.tl-det{font-size:11px;color:var(--text-sub);}
+
+/* ── ESTACIONES ── */
+.est-card{background:white;border:1.5px solid var(--gris-borde);border-radius:var(--r);padding:18px 20px;margin-bottom:14px;box-shadow:var(--shadow-sm);}
+.est-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
+.est-num{font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-sub);}
+.est-nombre{font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;color:var(--verde);margin-top:2px;}
+.est-edit-btn{padding:6px 14px;background:transparent;border:1.5px solid var(--gris-borde);border-radius:7px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--gris);cursor:pointer;transition:all .2s;white-space:nowrap;}
+.est-edit-btn:hover{border-color:var(--verde);color:var(--verde);}
+.est-precios{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:12px;}
+.est-precio{background:var(--verde-tenue);border-radius:var(--r-sm);padding:10px 12px;}
+.est-precio-tipo{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--text-sub);margin-bottom:3px;}
+.est-precio-val{font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;color:var(--verde);}
+.est-obs{font-size:11px;color:var(--text-sub);margin-top:6px;font-style:italic;}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-bg.open{display:flex;}
+.modal{background:white;border-radius:var(--r);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.3);}
+.modal-hd{background:var(--verde-oscuro);padding:18px 22px;border-radius:var(--r) var(--r) 0 0;display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;color:white;}
+.modal-close{background:rgba(255,255,255,.15);border:none;color:white;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.modal-body{padding:22px;}
+
+/* ── AJUSTES ── */
+.ajuste-section{margin-bottom:22px;}
+.ajuste-sec-title{font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.cuenta-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1.5px solid var(--gris-borde);border-radius:var(--r-sm);margin-bottom:8px;background:white;}
+.cuenta-info{display:flex;flex-direction:column;gap:2px;}
+.cuenta-email{font-weight:700;font-size:13px;color:var(--text);}
+.cuenta-role{font-size:10px;color:var(--text-sub);font-weight:600;text-transform:uppercase;letter-spacing:1px;}
+.cuenta-actions{display:flex;gap:7px;}
+.btn-icon{padding:5px 10px;border-radius:7px;border:1.5px solid var(--gris-borde);background:transparent;cursor:pointer;font-size:12px;font-weight:700;transition:all .2s;}
+.btn-icon:hover{background:#f5f5f5;}
+.btn-icon.del{border-color:var(--rojo-b);color:var(--rojo);}
+.btn-icon.del:hover{background:var(--rojo-t);}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:white;border:1.5px solid var(--gris-borde);border-radius:var(--r-sm);margin-bottom:8px;}
+.toggle-info .toggle-title{font-weight:700;font-size:13px;color:var(--text);}
+.toggle-info .toggle-sub{font-size:11px;color:var(--text-sub);margin-top:2px;}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:var(--gris-borde);border-radius:22px;transition:.3s;cursor:pointer;}
+.toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s;}
+.toggle input:checked + .toggle-slider{background:var(--verde);}
+.toggle input:checked + .toggle-slider::before{transform:translateX(18px);}
+
+/* ── HISTORIAL FILTRO ── */
+.filtro-bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+.filtro-bar .inp{margin:0;flex:1;min-width:120px;padding:9px 13px;}
+
+/* ── REPORTE TABS ── */
+.rpt-tab{padding:9px 18px;background:white;border:1.5px solid var(--gris-borde);border-radius:var(--r-sm);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:var(--gris);cursor:pointer;transition:all .2s;}
+.rpt-tab:hover{border-color:var(--verde);color:var(--verde);}
+.rpt-tab.active{background:var(--verde);border-color:var(--verde);color:white;}
+
+/* ── REPORTE ── */
+.reporte-config{background:var(--verde-tenue);border:1.5px solid var(--verde-tenue2);border-radius:var(--r);padding:18px 20px;margin-bottom:16px;}
+.reporte-config-title{font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;color:var(--verde);margin-bottom:14px;}
+
+.dash-filt{padding:7px 16px;background:var(--bg-card);border:1.5px solid var(--gris-borde);border-radius:var(--r-sm);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--gris);cursor:pointer;transition:all .2s;}
+.dash-filt:hover{border-color:var(--verde);color:var(--verde);}
+.dash-filt.active{background:var(--verde);border-color:var(--verde);color:white;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:780px){
+  .li-left{display:none;} .li-right{width:100%;}
+  .fg,.fg3,.aut-grid{grid-template-columns:1fr;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .main{padding:12px;} .tb-user{display:none;}
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<!-- ════════════════ LOGIN ════════════════ -->
+<div id="login-screen">
+  <div class="li-deco"></div>
+  <div class="li-left">
+    <div>
+      <div class="li-brand-logo">
+        <img src="" alt="Bio" onerror="this.style.display='none'">
+      </div>
+      <div class="li-appname">Bio<span>Combustibles</span></div>
+      <div class="li-company">BioAmbientalistik S.A. de C.V.</div>
+      <div class="li-desc">Control operativo de combustible para flota de recolección. Autorizaciones, registros y análisis en tiempo real.</div>
+    </div>
+  </div>
+  <div class="li-right">
+    <div class="li-form">
+      <div class="li-title">Iniciar sesión</div>
+      <div class="li-sub">Accede con tus credenciales asignadas</div>
+      <label class="lbl">Correo electrónico</label>
+      <input class="inp" type="email" id="li-email" placeholder="usuario@bioambientalistik.mx">
+      <label class="lbl">Contraseña</label>
+      <input class="inp" type="password" id="li-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="btn-login" onclick="doLogin()">Iniciar Sesión</button>
+      <div class="li-err" id="li-err">Credenciales incorrectas.</div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ APP ════════════════ -->
+<div id="app">
+  <div class="topbar">
+    <button class="hbtn" id="hbtn" onclick="toggleSB()">
+      <div class="hb-l"></div><div class="hb-l"></div><div class="hb-l"></div>
+    </button>
+    <div class="tb-logo"><img src="" alt="Bio" onerror="this.style.display='none'"></div>
+    <div class="tb-sep"></div>
+    <div class="tb-name" onclick="irAInicio()" style="cursor:pointer">Bio<span>Combustibles</span> <span style="font-size:10px;font-weight:600;color:rgba(255,255,255,.3);letter-spacing:1px">v1.2</span></div>
+    <div class="tb-right">
+      <span class="tb-role" id="tb-role">Supervisor</span>
+      <span class="tb-user" id="tb-user"></span>
+      <button class="btn-out" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+
+  <div class="sb-overlay" id="overlay" onclick="closeSB()"></div>
+
+  <!-- SIDEBAR SUPERVISOR -->
+  <div class="sidebar" id="sb-sup">
+    <div class="sb-user">
+      <div class="sb-user-role">Supervisor</div>
+      <div class="sb-user-name" id="sb-name-sup">—</div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-sec">Operación</div>
+      <div class="sb-item active" onclick="navTo('aut','sb-sup',this)">
+        <span class="sb-ico">📋</span><span class="sb-lbl">Autorización de Carga</span>
+      </div>
+      <div class="sb-sec">Consulta</div>
+      <div class="sb-item" onclick="navTo('hist-sup','sb-sup',this)">
+        <span class="sb-ico">📄</span><span class="sb-lbl">Historial del Día</span>
+      </div>
+
+      <div class="sb-sec">Registros</div>
+      <div class="sb-item" onclick="navTo('flota-sup','sb-sup',this)">
+        <span class="sb-ico">🚛</span><span class="sb-lbl">Flota</span>
+      </div>
+      <div class="sb-sec">Sistema</div>
+      <div class="sb-item" onclick="navTo('ajustes-sup','sb-sup',this)">
+        <span class="sb-ico">👤</span><span class="sb-lbl">Mi perfil</span>
+      </div>
+      <div class="sb-item" onclick="navTo('simulador','sb-sup',this)">
+        <span class="sb-ico">🎓</span><span class="sb-lbl">Simulador</span>
+      </div>
+      <div class="sb-item" onclick="navTo('updates','sb-sup',this)">
+        <span class="sb-ico">🔄</span><span class="sb-lbl">Updates</span>
+      </div>
+    </nav>
+    <div class="sb-bot">
+      <div class="sb-out" onclick="doLogout()">
+        <span class="sb-ico">🚪</span><span class="sb-out-lbl">Cerrar sesión</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR DIRECCIÓN -->
+  <div class="sidebar" id="sb-dir">
+    <div class="sb-user">
+      <div class="sb-user-role">Dirección</div>
+      <div class="sb-user-name" id="sb-name-dir">—</div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-sec">Operación</div>
+      <div class="sb-item" onclick="navTo('aut','sb-dir',this)">
+        <span class="sb-ico">📋</span><span class="sb-lbl">Autorización de Carga</span>
+      </div>
+      <div class="sb-sec">General</div>
+      <div class="sb-item active" onclick="navTo('dashboard','sb-dir',this)">
+        <span class="sb-ico">📊</span><span class="sb-lbl">Dashboard</span>
+      </div>
+      <div class="sb-item" onclick="navTo('focos','sb-dir',this)">
+        <span class="sb-ico">🚨</span><span class="sb-lbl">Focos Rojos</span>
+        <span class="sb-bdg" id="bdg-focos" style="display:none">0</span>
+      </div>
+      <div class="sb-sec">Registros</div>
+      <div class="sb-item" onclick="navTo('historial','sb-dir',this)">
+        <span class="sb-ico">📋</span><span class="sb-lbl">Historial General</span>
+      </div>
+
+      <div class="sb-item" onclick="navTo('hist-unidad','sb-dir',this)">
+        <span class="sb-ico">🚛</span><span class="sb-lbl">Flota</span>
+      </div>
+      <div class="sb-item" onclick="navTo('reporte','sb-dir',this)">
+        <span class="sb-ico">📊</span><span class="sb-lbl">Reportes</span>
+      </div>
+      <div class="sb-sec">Configuración</div>
+      <div class="sb-item" onclick="navTo('estaciones','sb-dir',this)">
+        <span class="sb-ico">⛽</span><span class="sb-lbl">Estaciones</span>
+      </div>
+      <div class="sb-item" onclick="navTo('ajustes','sb-dir',this)">
+        <span class="sb-ico">⚙️</span><span class="sb-lbl">Ajustes</span>
+      </div>
+      <div class="sb-item" onclick="navTo('simulador','sb-dir',this)">
+        <span class="sb-ico">🎓</span><span class="sb-lbl">Simulador</span>
+      </div>
+      <div class="sb-item" onclick="navTo('updates','sb-dir',this)">
+        <span class="sb-ico">🔄</span><span class="sb-lbl">Updates</span>
+      </div>
+    </nav>
+    <div class="sb-bot">
+      <div class="sb-out" onclick="doLogout()">
+        <span class="sb-ico">🚪</span><span class="sb-out-lbl">Cerrar sesión</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-wrap"><div class="main">
+
+    <!-- ══ AUTORIZACIÓN DE CARGA (SUPERVISOR) ══ -->
+    <div class="page active" id="page-aut">
+      <div class="pg-hd">
+        <div class="pg-title">📋 Autorización de Carga de Combustible</div>
+        <div class="pg-sub">Genera la autorización diaria antes de que la unidad salga a ruta</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Nueva Autorización</div>
+        <div class="card-sub">La asignación de litros se calculará automáticamente con base en el historial de la unidad</div>
+
+        <div class="steps">
+          <div class="step-item"><div class="step-c act" id="sc1">1</div><div class="step-n act" id="sn1">Identificación</div></div>
+          <div class="step-line"></div>
+          <div class="step-item"><div class="step-c" id="sc2">2</div><div class="step-n" id="sn2">Unidad y Operador</div></div>
+          <div class="step-line"></div>
+          <div class="step-item"><div class="step-c" id="sc3">3</div><div class="step-n" id="sn3">Confirmar</div></div>
+        </div>
+
+        <!-- P1 -->
+        <div id="paso1">
+          <div class="fg">
+            <div class="fgg"><label class="lbl">Tu nombre (Supervisor) *</label><input class="inp" type="text" id="a-sup" placeholder="Nombre completo" oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase"></div>
+            <div class="fgg"><label class="lbl">Fecha de operación</label><input class="inp" type="date" id="a-fecha"></div>
+          </div>
+          <div class="btn-row"><button class="btn-main" onclick="irPaso(2)">Continuar →</button></div>
+        </div>
+
+        <!-- P2 -->
+        <div id="paso2" style="display:none">
+          <div class="fg">
+            <div class="fgg">
+              <label class="lbl">Unidad *</label>
+              <select class="inp sel" id="a-unidad" onchange="calcAsig()">
+                <option value="">— Selecciona la unidad —</option>
+              </select>
+            </div>
+            <div class="fgg"><label class="lbl">Operador / Chofer *</label><input class="inp" type="text" id="a-op" placeholder="Nombre completo del chofer"></div>
+            <div class="fgg"><label class="lbl">Odómetro inicial (km) *</label><input class="inp" type="number" id="a-odo" placeholder="Ej. 87340" oninput="validarOdo(this)" min="0" max="9999999">
+              <div id="odo-warn" style="display:none;font-size:11px;color:var(--amarillo);font-weight:600;margin-top:6px;padding:6px 10px;background:var(--amarillo-t);border-radius:6px">⚠️ Este odómetro es igual o menor al último registrado. Verifica la lectura.</div>
+              <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer;font-size:12px;color:var(--text-sub)">
+                <input type="checkbox" id="a-odo-na" onchange="toggleOdoNA(this)" style="width:16px;height:16px;accent-color:var(--verde);cursor:pointer">
+                <span>Odómetro no disponible (en reparación)</span>
+              </label>
+            </div>
+            <div class="fgg"><label class="lbl">Tipo de odómetro</label>
+              <select class="inp sel" id="a-tipo">
+                <option>Tablero digital</option><option>Tablero análogo</option><option>Rueda / mecánico</option>
+              </select>
+            </div>
+            <div class="fgg">
+              <label class="lbl">Litros autorizados *</label>
+              <input class="inp" type="number" id="a-litros" placeholder="Ej. 60" min="1" max="500" style="margin:0">
+              <div style="font-size:11px;color:var(--text-sub);margin-top:4px">Cantidad de litros que el supervisor autoriza cargar</div>
+            </div>
+          </div>
+          <div class="fg" style="margin-top:13px;gap:13px">
+            <div class="fgg">
+              <label class="lbl">Horario válido — Desde *</label>
+              <input class="inp" type="time" id="a-hora-ini" value="05:30" style="margin:0">
+            </div>
+            <div class="fgg">
+              <label class="lbl">Horario válido — Hasta *</label>
+              <input class="inp" type="time" id="a-hora-fin" value="08:00" style="margin:0">
+            </div>
+          </div>
+          <div style="margin-top:8px;padding:8px 12px;background:var(--verde-tenue);border-radius:var(--r-sm);font-size:11px;color:var(--verde);font-weight:600;">
+            ⏰ La aprobación es únicamente válida en el horario establecido
+          </div>
+          <div class="fgg" style="margin-top:13px">
+            <label class="lbl">Estación de carga *</label>
+            <div id="est-lista" style="border:2px solid var(--gris-borde);border-radius:var(--r-sm);overflow:hidden;background:#fafcf9;">
+              <div class="est-opt active" data-est="RESCAÑO" onclick="selEst(this)">
+                <div class="est-opt-name">RESCAÑO</div>
+              </div>
+              <div class="est-opt" data-est="METRO COMBUSTIBLES" onclick="selEst(this)">
+                <div class="est-opt-name">METRO COMBUSTIBLES</div>
+              </div>
+              <div class="est-opt" data-est="ESTANZUELA" onclick="selEst(this)">
+                <div class="est-opt-name">ESTANZUELA</div>
+              </div>
+            </div>
+          </div>
+
+
+          <div style="margin-top:13px">
+            <label class="lbl">Foto del odómetro *</label>
+            <label class="photo-up" style="cursor:pointer;display:block">
+              <input type="file" id="foto-odometro" accept="image/*" capture="environment" style="display:none" onchange="previewFoto(this)">
+              <div class="pup-ico">📷</div>
+              <div class="pup-txt" id="foto-txt">Toca para subir foto del odómetro</div>
+            </label>
+            <img id="foto-preview" src="" alt="Vista previa" style="display:none;width:100%;max-height:180px;object-fit:contain;border-radius:var(--r-sm);margin-top:8px;border:1.5px solid var(--gris-borde)">
+          </div>
+          <div class="btn-row">
+            <button class="btn-ghost" onclick="irPaso(1)">← Atrás</button>
+            <button class="btn-main" onclick="irPaso(3)">Vista previa →</button>
+          </div>
+        </div>
+
+        <!-- P3 -->
+        <div id="paso3" style="display:none">
+          <div class="aut-doc" id="aut-preview">
+            <div class="aut-doc-hd">
+              <div class="aut-doc-logo"><span style="color:white;font-family:'Nunito',sans-serif;font-weight:900;font-size:13px">BIOAMBIENTALISTIK</span></div>
+              <div class="aut-doc-right">
+                <div class="aut-doc-name">Autorización de Carga de Combustible</div>
+                <div class="aut-doc-folio-big" id="pr-folio">—</div>
+                <div class="aut-doc-folio-sub" id="pr-folio-fecha">—</div>
+              </div>
+            </div>
+            <div class="aut-doc-body">
+              <div class="aut-strip"><div class="aut-strip-ico">🚛</div><div class="aut-strip-txt" id="pr-strip">—</div></div>
+              <div class="aut-grid">
+                <div class="aut-field"><label>Supervisor autoriza</label><span id="pr-sup">—</span></div>
+                <div class="aut-field"><label>Estación de carga</label><span id="pr-est">—</span></div>
+                <div class="aut-field"><label>Combustible</label><span id="pr-comb">—</span></div>
+                <div class="aut-field"><label>Litros autorizados</label><span id="pr-litros" style="font-size:18px;font-weight:900;color:var(--verde)">—</span></div>
+                <div class="aut-field"><label>Odómetro inicial</label><span id="pr-odo">—</span></div>
+                <div class="aut-field"><label>Fecha</label><span id="pr-fecha">—</span></div>
+                <div class="aut-field"><label>Hora de emisión</label><span id="pr-hora">—</span></div>
+                <div class="aut-field" style="grid-column:1/-1;background:var(--verde-tenue);border-radius:var(--r-sm);padding:10px 12px;">
+                  <label>⏰ Horario válido de carga</label>
+                  <span id="pr-horario" style="font-size:15px">—</span>
+                  <div style="font-size:10px;color:var(--text-sub);margin-top:3px;font-style:italic">La aprobación es únicamente válida en el horario establecido</div>
+                </div>
+              </div>
+
+            </div>
+            <div class="aut-doc-ft">BioAmbientalistik S.A. de C.V. · Documento generado electrónicamente.</div>
+          </div>
+          <div class="cap-hint">Toma captura de pantalla para compartir la autorización.</div>
+          <div class="btn-row">
+            <button class="btn-ghost" onclick="irPaso(2)">← Editar</button>
+            <button class="btn-main" onclick="guardarAut()">✅ Guardar autorización</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla del día -->
+      <div class="card">
+        <div class="card-hd">
+          <div><div class="card-title">Autorizaciones de hoy</div></div>
+          <span class="bdg bdg-ok" id="count-aut">0 emitidas</span>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Folio</th><th>Hora</th><th>Unidad</th><th>Placas</th><th>Combustible</th><th>Estación</th><th>Operador</th><th>Supervisor</th><th>Odóm. ini.</th><th>Litros</th><th>Horario válido</th></tr></thead>
+            <tbody id="tbody-aut-dia">
+              <tr><td colspan="10" style="text-align:center;padding:24px;color:var(--text-sub)">Sin autorizaciones generadas hoy</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ HISTORIAL DÍA (SUPERVISOR) ══ -->
+    <div class="page" id="page-hist-sup">
+      <div class="pg-hd">
+        <div class="pg-title">📄 Historial del Día</div>
+        <div class="pg-sub">Autorizaciones de carga emitidas en la jornada actual</div>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Folio</th><th>Hora</th><th>Unidad</th><th>Placas</th><th>Combustible</th><th>Estación</th><th>Operador</th><th>Supervisor</th><th>Odóm. ini.</th><th>Litros</th><th>Horario válido</th></tr></thead>
+            <tbody id="tbody-hist-sup">
+              <tr><td colspan="10" style="text-align:center;padding:24px;color:var(--text-sub)">Sin registros en la jornada actual</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ DASHBOARD (DIRECCIÓN) ══ -->
+    <div class="page" id="page-dashboard">
+      <div class="pg-hd">
+        <div class="pg-title">📊 Dashboard</div>
+        <div class="pg-sub">Resumen operativo · <span id="hoy-lbl"></span></div>
+      </div>
+      <div style="display:flex;gap:7px;margin:14px 0;flex-wrap:wrap">
+        <button class="dash-filt active" data-p="hoy" onclick="setDashPeriodo(this)">Hoy</button>
+        <button class="dash-filt" data-p="semana" onclick="setDashPeriodo(this)">Esta semana</button>
+        <button class="dash-filt" data-p="mes" onclick="setDashPeriodo(this)">Este mes</button>
+        <button class="dash-filt" data-p="anio" onclick="setDashPeriodo(this)">Este año</button>
+      </div>
+      <div class="stats-grid" style="margin-bottom:16px">
+        <div class="stat"><div class="stat-lbl">Autorizaciones</div><div class="stat-val" id="dash-aut-hoy">0</div><div class="stat-s" id="dash-aut-sub">hoy</div></div>
+        <div class="stat"><div class="stat-lbl">Unidades con registro</div><div class="stat-val" id="dash-unid-aut">0</div><div class="stat-s">distintas</div></div>
+        <div class="stat"><div class="stat-lbl">Focos rojos</div><div class="stat-val r" id="dash-focos">0</div><div class="stat-s">activos</div></div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">Autorizaciones por día</div>
+        <div style="position:relative;height:180px;margin-top:8px">
+          <canvas id="chart-dias" role="img" aria-label="Autorizaciones por dia de la semana">Sin datos</canvas>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div class="card">
+          <div class="card-title">Por estación</div>
+          <div id="legend-est" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;font-size:11px;color:var(--text-sub)"></div>
+          <div style="position:relative;height:150px">
+            <canvas id="chart-est" role="img" aria-label="Distribucion por estacion">Sin datos</canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Actividad por hora</div>
+          <div style="position:relative;height:180px;margin-top:8px">
+            <canvas id="chart-hora" role="img" aria-label="Autorizaciones por hora del dia">Sin datos</canvas>
+          </div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div class="card">
+          <div class="card-title">Top unidades</div>
+          <div style="position:relative;height:200px;margin-top:8px">
+            <canvas id="chart-unid" role="img" aria-label="Unidades con mas autorizaciones">Sin datos</canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Supervisores activos</div>
+          <div style="position:relative;height:200px;margin-top:8px">
+            <canvas id="chart-sup" role="img" aria-label="Supervisores con mas autorizaciones">Sin datos</canvas>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Actividad reciente</div>
+        <div class="card-sub" style="margin-bottom:14px">Últimos movimientos registrados</div>
+        <div id="tl-dash"><div style="text-align:center;padding:28px;color:var(--text-sub);font-size:13px">Sin actividad registrada aún. Las autorizaciones generadas aparecerán aquí en tiempo real.</div></div>
+      </div>
+    </div>
+    <!-- ══ FOCOS ROJOS ══ -->
+    <div class="page" id="page-focos">
+      <div class="pg-hd">
+        <div class="pg-title">🚨 Focos Rojos e Irregularidades</div>
+        <div class="pg-sub">Alertas detectadas automáticamente por el sistema</div>
+      </div>
+      <div class="card" id="focos-container">
+        <div style="text-align:center;padding:48px 20px;color:var(--text-sub)">
+          <div style="font-size:40px;margin-bottom:12px">✅</div>
+          <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;margin-bottom:6px;color:var(--text)">Sin irregularidades detectadas</div>
+          <div style="font-size:13px">Los focos rojos aparecerán aquí automáticamente cuando el sistema detecte anomalías en las cargas registradas.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ HISTORIAL GENERAL (DIRECCIÓN) ══ -->
+    <div class="page" id="page-historial">
+      <div class="pg-hd">
+        <div class="pg-title">📋 Historial General</div>
+        <div class="pg-sub">Todas las autorizaciones de carga registradas en el sistema</div>
+      </div>
+      <div class="card">
+        <div class="filtro-bar">
+          <input class="inp" type="text" id="f-folio" placeholder="Buscar por folio — AUT-2026-..." style="flex:1;min-width:200px" oninput="filtrarHistorial()">
+          <input class="inp" type="date" id="f-desde" style="flex:0 0 auto;width:145px">
+          <input class="inp" type="date" id="f-hasta" style="flex:0 0 auto;width:145px">
+          <select class="inp sel" id="f-unidad" style="flex:0 0 auto;width:155px;margin:0;padding:9px 36px 9px 12px" onchange="filtrarHistorial()">
+            <option value="">Todas las unidades</option>
+            <option>BAK-01</option><option>BAK-05</option><option>BAK-07</option>
+            <option>BAK-08</option><option>BAK-09</option><option>BAK-10</option>
+            <option>BAK-12</option><option>BAK-14</option><option>BAK-15</option>
+            <option>BAK-17</option><option>BAK-20</option><option>BAK-23</option>
+            <option>BAK-24</option><option>BAK-25</option><option>BAK-28</option>
+            <option>BAK-29</option><option>BAK-30</option><option>BAK-31</option>
+          </select>
+          <select class="inp sel" id="f-est" style="flex:0 0 auto;width:160px;margin:0;padding:9px 36px 9px 12px" onchange="filtrarHistorial()">
+            <option value="">Todas las estaciones</option>
+            <option>RESCAÑO</option><option>METRO COMBUSTIBLES</option><option>ESTANZUELA</option>
+          </select>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Folio</th><th>Fecha</th><th>Hora</th><th>Unidad</th><th>Placas</th><th>Combustible</th><th>Estación</th><th>Horario válido</th><th>Operador</th><th>Supervisor</th><th>Odóm. ini.</th><th>Detalle</th></tr></thead>
+            <tbody id="tbody-historial">
+              <tr><td colspan="12" style="text-align:center;padding:32px;color:var(--text-sub)">Sin registros. Las autorizaciones generadas aparecerán aquí.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ REPORTE EXCEL ══ -->
+    <div class="page" id="page-reporte">
+      <div class="pg-hd">
+        <div class="pg-title">📊 Reportes</div>
+        <div class="pg-sub">Genera y descarga reportes del periodo seleccionado — por unidad, por estación o general de toda la flota</div>
+      </div>
+      <!-- TABS de tipo de reporte -->
+      <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+        <button class="rpt-tab active" id="rtab-gral" onclick="setRptTab('gral')">🗂️ Reporte General</button>
+        <button class="rpt-tab" id="rtab-unidad" onclick="setRptTab('unidad')">🚛 Por Unidad</button>
+        <button class="rpt-tab" id="rtab-estacion" onclick="setRptTab('estacion')">⛽ Por Estación</button>
+      </div>
+
+      <!-- PERIODO (común a todos) -->
+      <div class="card">
+        <div class="card-title">Periodo del reporte</div>
+        <div class="fg fg3" style="gap:13px;margin-top:10px">
+          <div class="fgg"><label class="lbl">Fecha inicio</label><input class="inp" type="date" id="r-desde" style="margin:0"></div>
+          <div class="fgg"><label class="lbl">Fecha fin</label><input class="inp" type="date" id="r-hasta" style="margin:0"></div>
+          <div class="fgg"><label class="lbl">Agrupar por</label>
+            <select class="inp sel" id="r-grupo" style="margin:0">
+              <option>Día</option><option selected>Semana</option><option>Mes</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- REPORTE GENERAL -->
+      <div id="rpt-gral" class="rpt-panel">
+        <div class="card">
+          <div class="card-title">📋 Reporte General de Flota</div>
+          <div class="card-sub">Análisis completo de toda la flota en el periodo seleccionado</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+            <div style="background:var(--verde-tenue);border-radius:var(--r-sm);padding:12px 14px">
+              <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;color:var(--verde);margin-bottom:3px">Hoja 1 — Autorizaciones</div>
+              <div style="font-size:11px;color:var(--text-sub)">Todas las autorizaciones: folio, fecha, unidad, operador, supervisor, estación y odómetro.</div>
+            </div>
+            <div style="background:var(--verde-tenue);border-radius:var(--r-sm);padding:12px 14px">
+              <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;color:var(--verde);margin-bottom:3px">Hoja 2 — Resumen por unidad</div>
+              <div style="font-size:11px;color:var(--text-sub)">Total de cargas, rendimiento promedio y comportamiento por cada unidad.</div>
+            </div>
+            <div style="background:var(--verde-tenue);border-radius:var(--r-sm);padding:12px 14px">
+              <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;color:var(--verde);margin-bottom:3px">Hoja 3 — Resumen por estación</div>
+              <div style="font-size:11px;color:var(--text-sub)">Total de cargas por estación de servicio en el periodo.</div>
+            </div>
+            <div style="background:var(--verde-tenue);border-radius:var(--r-sm);padding:12px 14px">
+              <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;color:var(--verde);margin-bottom:3px">Hoja 4 — Irregularidades</div>
+              <div style="font-size:11px;color:var(--text-sub)">Focos rojos y alertas detectadas con operador y supervisor involucrado.</div>
+            </div>
+          </div>
+          <div class="btn-row"><button class="btn-excel" onclick="descargarExcel()">⬇️ Descargar Excel — Reporte General</button></div>
+        </div>
+      </div>
+
+      <!-- REPORTE POR UNIDAD -->
+      <div id="rpt-unidad" class="rpt-panel" style="display:none">
+        <div class="card">
+          <div class="card-title">🚛 Reporte por Unidad</div>
+          <div class="card-sub">Historial detallado de una unidad específica en el periodo</div>
+          <div class="fgg" style="margin-top:10px">
+            <label class="lbl">Selecciona la unidad</label>
+            <select class="inp sel" id="r-unidad" style="margin:0">
+              <option value="">— Todas las unidades —</option>
+              <option>BAK-01 | LF24521</option><option>BAK-05 | 33BK3W</option>
+              <option>BAK-07 | LF52593</option><option>BAK-08 | LH17876</option>
+              <option>BAK-09 | NCV9640</option><option>BAK-10 | LF61028</option>
+              <option>BAK-11 | LF63270</option><option>BAK-12 | 74BB2Z</option>
+              <option>BAK-13 | LF75741</option><option>BAK-14 | LF77558</option>
+              <option>BAK-15 | LF89946</option><option>BAK-16 | LVW089A</option>
+              <option>BAK-17 | 86BD3C</option><option>BAK-18 | LF95695</option>
+              <option>BAK-19 | MSH681A</option><option>BAK-20 | 20BE1Z</option>
+              <option>BAK-21 | Minicargador</option><option>BAK-22 | LNW6834</option>
+              <option>BAK-23 | 76BG6W</option><option>BAK-24 | LG79360</option>
+              <option>BAK-25 | 06BJ9B</option><option>BAK-26 | KS7657A</option>
+              <option>BAK-27 | 88BK67</option><option>BAK-28 | LH23874</option>
+              <option>BAK-29 | 36BL7C</option><option>BAK-30 | MYA406C</option>
+              <option>BAK-31 | 74BL5G</option><option>BAK-32 | KV8402A</option>
+            </select>
+          </div>
+          <div style="background:var(--verde-tenue);border-radius:var(--r-sm);padding:12px 14px;margin-top:14px">
+            <div style="font-size:12px;color:var(--verde)">El reporte incluirá: todas las autorizaciones de la unidad, odómetros registrados, estaciones utilizadas, supervisores y operadores que la gestionaron, y cualquier alerta generada en el periodo.</div>
+          </div>
+          <div class="btn-row"><button class="btn-excel" onclick="descargarExcelUnidad()">⬇️ Descargar Excel — Unidad</button></div>
+        </div>
+      </div>
+
+      <!-- REPORTE POR ESTACIÓN -->
+      <div id="rpt-estacion" class="rpt-panel" style="display:none">
+        <div class="card">
+          <div class="card-title">⛽ Reporte por Estación</div>
+          <div class="card-sub">Detalle de operaciones por estación de servicio en el periodo</div>
+          <div class="fgg" style="margin-top:10px">
+            <label class="lbl">Selecciona la estación</label>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+              <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1.5px solid var(--gris-borde);border-radius:var(--r-sm);cursor:pointer;background:white;transition:all .2s" id="rest-1">
+                <input type="radio" name="r-est" value="RESCAÑO" checked style="accent-color:var(--verde)">
+                <div><div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:13px">RESCAÑO</div><div style="font-size:11px;color:var(--text-sub)">Diesel · Magna Sin · Premium</div></div>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1.5px solid var(--gris-borde);border-radius:var(--r-sm);cursor:pointer;background:white;transition:all .2s" id="rest-2">
+                <input type="radio" name="r-est" value="METRO COMBUSTIBLES" style="accent-color:var(--verde)">
+                <div><div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:13px">METRO COMBUSTIBLES</div><div style="font-size:11px;color:var(--text-sub)">Diesel · Premium</div></div>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1.5px solid var(--gris-borde);border-radius:var(--r-sm);cursor:pointer;background:white;transition:all .2s" id="rest-3">
+                <input type="radio" name="r-est" value="ESTANZUELA" style="accent-color:var(--verde)">
+                <div><div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:13px">ESTANZUELA</div><div style="font-size:11px;color:var(--text-sub)">Magna Sin · Zona AQ</div></div>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1.5px solid var(--gris-borde);border-radius:var(--r-sm);cursor:pointer;background:white;transition:all .2s">
+                <input type="radio" name="r-est" value="todas" style="accent-color:var(--verde)">
+                <div><div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:13px">Todas las estaciones</div><div style="font-size:11px;color:var(--text-sub)">Comparativo general</div></div>
+              </label>
+            </div>
+          </div>
+          <div style="background:var(--verde-tenue);border-radius:var(--r-sm);padding:12px 14px;margin-top:14px">
+            <div style="font-size:12px;color:var(--verde)">El reporte incluirá: todas las cargas registradas en la estación, unidades que la usaron, tipo de combustible, precio por litro capturado y cualquier discrepancia de precio detectada.</div>
+          </div>
+          <div class="btn-row"><button class="btn-excel" onclick="descargarExcelEstacion()">⬇️ Descargar Excel — Estación</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ESTACIONES ══ -->
+    <div class="page" id="page-estaciones">
+      <div class="pg-hd">
+        <div class="pg-title">⛽ Estaciones de Servicio</div>
+        <div class="pg-sub">Administra los datos, precios y observaciones de cada estación</div>
+      </div>
+
+      <!-- RESCAÑO -->
+      <div class="est-card" id="est-card-1">
+        <div class="est-header">
+          <div>
+            <div class="est-num">Estación 001</div>
+            <div class="est-nombre">RESCAÑO</div>
+          </div>
+          <button class="est-edit-btn" onclick="abrirModalEst(1)">✏️ Editar</button>
+        </div>
+        <div class="est-precios">
+          <div class="est-precio">
+            <div class="est-precio-tipo">Diesel</div>
+            <div class="est-precio-val">$28.28</div>
+          </div>
+          <div class="est-precio">
+            <div class="est-precio-tipo">Magna Sin</div>
+            <div class="est-precio-val">$23.89</div>
+          </div>
+          <div class="est-precio">
+            <div class="est-precio-tipo">Premium</div>
+            <div class="est-precio-val">$28.49</div>
+          </div>
+        </div>
+        <div class="est-obs">SERVICIO EL RESCAÑO · Vía Morelos No. 484</div>
+      </div>
+
+      <!-- METRO COMBUSTIBLES -->
+      <div class="est-card" id="est-card-2">
+        <div class="est-header">
+          <div>
+            <div class="est-num">Estación 002</div>
+            <div class="est-nombre">METRO COMBUSTIBLES</div>
+          </div>
+          <button class="est-edit-btn" onclick="abrirModalEst(2)">✏️ Editar</button>
+        </div>
+        <div class="est-precios">
+          <div class="est-precio">
+            <div class="est-precio-tipo">Diesel</div>
+            <div class="est-precio-val">$28.49</div>
+          </div>
+          <div class="est-precio">
+            <div class="est-precio-tipo">Premium</div>
+            <div class="est-precio-val">$27.99</div>
+          </div>
+        </div>
+        <div class="est-obs">Sin observaciones registradas.</div>
+      </div>
+
+      <!-- ESTANZUELA -->
+      <div class="est-card" id="est-card-3">
+        <div class="est-header">
+          <div>
+            <div class="est-num">Estación 003</div>
+            <div class="est-nombre">ESTANZUELA</div>
+          </div>
+          <button class="est-edit-btn" onclick="abrirModalEst(3)">✏️ Editar</button>
+        </div>
+        <div class="est-precios">
+          <div class="est-precio">
+            <div class="est-precio-tipo">Magna Sin</div>
+            <div class="est-precio-val">$23.89</div>
+          </div>
+        </div>
+        <div class="est-obs">Exclusiva para unidades de Zona AQ (BAK-07 y BAK-09).</div>
+      </div>
+    </div>
+
+    <!-- ══ AJUSTES ══ -->
+    <div class="page" id="page-ajustes">
+      <div class="pg-hd">
+        <div class="pg-title">⚙️ Ajustes del Sistema</div>
+        <div class="pg-sub">Configuración general, gestión de cuentas y preferencias operativas</div>
+      </div>
+
+      <!-- Gestión de cuentas -->
+      <div class="card">
+        <div class="ajuste-section">
+          <div class="ajuste-sec-title">👥 Gestión de cuentas</div>
+          <div id="lista-cuentas">
+            <div class="cuenta-row">
+              <div class="cuenta-info">
+                <div class="cuenta-email">direccion@bioambientalistik.mx</div>
+                <div class="cuenta-role">Dirección · Cuenta actual</div>
+              </div>
+              <div class="cuenta-actions">
+                <span class="bdg bdg-ok">Activa</span>
+              </div>
+            </div>
+            <div class="cuenta-row">
+              <div class="cuenta-info">
+                <div class="cuenta-email">supervisor@bioambientalistik.mx</div>
+                <div class="cuenta-role">Supervisor</div>
+              </div>
+              <div class="cuenta-actions">
+                <button class="btn-icon" onclick="alert('Editar cuenta')">✏️</button>
+                <button class="btn-icon del" onclick="confirmarEliminar('supervisor@bioambientalistik.mx')">🗑️</button>
+              </div>
+            </div>
+          </div>
+          <div class="btn-row" style="justify-content:flex-start;margin-top:14px">
+            <button class="btn-main" onclick="abrirModalCuenta()">+ Nueva cuenta</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Parámetros operativos -->
+      <div class="card">
+        <div class="ajuste-section">
+          <div class="ajuste-sec-title">🔧 Parámetros operativos</div>
+
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title">Bloquear carga sin autorización previa</div>
+              <div class="toggle-sub">No se podrá registrar una carga si la unidad no tiene autorización activa del día</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title">Alerta por exceso de litros cargados</div>
+              <div class="toggle-sub">Generar foco rojo cuando los litros reales superen la asignación</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title">Alerta por discrepancia de precio</div>
+              <div class="toggle-sub">Foco rojo cuando el precio capturado difiere del precio registrado de la estación</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title">Notificación si falta odómetro vespertino</div>
+              <div class="toggle-sub">Recordatorio automático cuando no se registró la lectura fin de turno</div>
+            </div>
+            <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
+          </div>
+
+          <div style="margin-top:14px">
+            <label class="lbl">Tolerancia de litros sobre la asignación (%)</label>
+            <input class="inp" type="number" value="5" min="0" max="20" style="max-width:180px">
+            <div style="font-size:11px;color:var(--text-sub);margin-top:4px">Porcentaje máximo permitido antes de generar foco rojo</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Precios de referencia CRE -->
+      <div class="card">
+        <div class="ajuste-section">
+          <div class="ajuste-sec-title">📡 Referencia CRE</div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title">Mostrar enlace a precios CRE en el sistema</div>
+              <div class="toggle-sub">Acceso rápido a consulta de precios máximos de la Comisión Reguladora de Energía</div>
+            </div>
+            <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
+          </div>
+          <div style="margin-top:10px">
+            <a href="https://www.cne.gob.mx/ConsultaPrecios/GasolinasyDiesel/GasolinasyDiesel.html" target="_blank"
+               style="font-size:12px;color:var(--verde);font-weight:700;text-decoration:none;">
+              🔗 Consultar precios actuales en CRE →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Respaldo de datos -->
+      <div class="card">
+        <div class="ajuste-section">
+          <div class="ajuste-sec-title">💾 Datos y respaldo</div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title">Exportación automática semanal</div>
+              <div class="toggle-sub">Genera y envía un reporte Excel cada lunes con el resumen de la semana anterior</div>
+            </div>
+            <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="btn-row" style="justify-content:flex-start;margin-top:10px">
+            <button class="btn-ghost" onclick="alert('Exportando respaldo completo...')">📥 Exportar respaldo completo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ HISTORIAL POR UNIDAD ══ -->
+    <div class="page" id="page-hist-unidad">
+      <div class="pg-hd">
+        <div class="pg-title">🚛 Flota</div>
+        <div class="pg-sub">Historial completo, rendimiento y comportamiento de cada unidad de la flota</div>
+      </div>
+
+      <!-- Selector de unidad -->
+      <div class="card">
+        <div class="card-title">Selecciona una unidad</div>
+        <div class="card-sub">Elige la unidad para ver su ficha completa</div>
+        <div class="fg" style="gap:13px">
+          <div class="fgg">
+            <label class="lbl">Unidad</label>
+            <select class="inp sel" id="hu-selector" onchange="cargarUnidad(this.value)" style="margin:0">
+              <option value="">— Selecciona —</option>
+              <option value="BAK-01|LF24521|DIESEL">BAK-01 | LF24521 | Diesel</option>
+              <option value="BAK-05|33BK3W|DIESEL">BAK-05 | 33BK3W | Diesel</option>
+              <option value="BAK-07|LF52593|MAGNA SIN">BAK-07 | LF52593 | Magna Sin</option>
+              <option value="BAK-08|LH17876|DIESEL">BAK-08 | LH17876 | Diesel</option>
+              <option value="BAK-09|NCV9640|MAGNA SIN">BAK-09 | NCV9640 | Magna Sin</option>
+              <option value="BAK-10|LF61028|DIESEL">BAK-10 | LF61028 | Diesel</option>
+              <option value="BAK-11|LF63270|DIESEL">BAK-11 | LF63270 | Diesel</option>
+              <option value="BAK-12|74BB2Z|DIESEL">BAK-12 | 74BB2Z | Diesel</option>
+              <option value="BAK-13|LF75741|DIESEL">BAK-13 | LF75741 | Diesel</option>
+              <option value="BAK-14|LF77558|DIESEL">BAK-14 | LF77558 | Diesel</option>
+              <option value="BAK-15|LF89946|DIESEL">BAK-15 | LF89946 | Diesel</option>
+              <option value="BAK-16|LVW089A|MAGNA SIN">BAK-16 | LVW089A | Magna Sin</option>
+              <option value="BAK-17|86BD3C|DIESEL">BAK-17 | 86BD3C | Diesel</option>
+              <option value="BAK-18|LF95695|DIESEL">BAK-18 | LF95695 | Diesel</option>
+              <option value="BAK-19|MSH681A|PREMIUM">BAK-19 | MSH681A | Premium</option>
+              <option value="BAK-20|20BE1Z|DIESEL">BAK-20 | 20BE1Z | Diesel</option>
+              <option value="BAK-21|MINICARGADOR|DIESEL">BAK-21 | Minicargador | Diesel</option>
+              <option value="BAK-22|LNW6834|MAGNA SIN">BAK-22 | LNW6834 | Magna Sin</option>
+              <option value="BAK-23|76BG6W|DIESEL">BAK-23 | 76BG6W | Diesel</option>
+              <option value="BAK-24|LG79360|DIESEL">BAK-24 | LG79360 | Diesel</option>
+              <option value="BAK-25|06BJ9B|DIESEL">BAK-25 | 06BJ9B | Diesel</option>
+              <option value="BAK-26|KS7657A|DIESEL">BAK-26 | KS7657A | Diesel</option>
+              <option value="BAK-27|88BK67|DIESEL">BAK-27 | 88BK67 | Diesel</option>
+              <option value="BAK-28|LH23874|DIESEL">BAK-28 | LH23874 | Diesel</option>
+              <option value="BAK-29|36BL7C|DIESEL">BAK-29 | 36BL7C | Diesel</option>
+              <option value="BAK-30|MYA406C|PREMIUM">BAK-30 | MYA406C | Premium</option>
+              <option value="BAK-31|74BL5G|DIESEL">BAK-31 | 74BL5G | Diesel</option>
+              <option value="BAK-32|KV8402A|DIESEL">BAK-32 | KV8402A | Diesel</option>
+            </select>
+          </div>
+          <div class="fgg">
+            <label class="lbl">Periodo</label>
+            <select class="inp sel" id="hu-periodo" onchange="cargarUnidad(document.getElementById('hu-selector').value)" style="margin:0">
+              <option value="7">Últimos 7 días</option>
+              <option value="30" selected>Últimos 30 días</option>
+              <option value="90">Últimos 3 meses</option>
+              <option value="0">Todo el historial</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel de unidad (oculto hasta selección) -->
+      <div id="hu-panel" style="display:none">
+
+        <!-- Ficha de la unidad -->
+        <div class="card" id="hu-ficha">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+            <div>
+              <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:28px;color:var(--verde-oscuro);letter-spacing:-1px" id="hu-nombre">—</div>
+              <div style="font-size:13px;color:var(--text-sub);margin-top:3px" id="hu-placas-comb">—</div>
+            </div>
+            <span class="bdg bdg-ok" id="hu-estado-bdg">Activa</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:18px" id="hu-stats">
+            <div class="stat"><div class="stat-lbl">Total autorizaciones</div><div class="stat-val" id="hu-total-aut">0</div><div class="stat-s">en el periodo</div></div>
+            <div class="stat"><div class="stat-lbl">Estación más usada</div><div class="stat-val" style="font-size:14px;letter-spacing:0" id="hu-est-mas">—</div><div class="stat-s">&nbsp;</div></div>
+            <div class="stat"><div class="stat-lbl">Supervisores</div><div class="stat-val" id="hu-sup-count">0</div><div class="stat-s">distintos</div></div>
+            <div class="stat"><div class="stat-lbl">Operadores</div><div class="stat-val" id="hu-op-count">0</div><div class="stat-s">distintos</div></div>
+          </div>
+        </div>
+
+        <!-- Historial de autorizaciones de esa unidad -->
+        <div class="card">
+          <div class="card-hd">
+            <div>
+              <div class="card-title">Historial de autorizaciones</div>
+              <div class="card-sub">Registros de la unidad en el periodo seleccionado</div>
+            </div>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr><th>Folio</th><th>Fecha</th><th>Hora</th><th>Estación</th><th>Combustible</th><th>Operador</th><th>Supervisor</th><th>Odóm. ini.</th><th>Estado</th></tr>
+              </thead>
+              <tbody id="hu-tbody">
+                <tr id="hu-empty-row"><td colspan="9" style="text-align:center;padding:28px;color:var(--text-sub)">Sin registros en el periodo seleccionado.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Alertas de la unidad -->
+        <div class="card" id="hu-alertas-card">
+          <div class="card-title">Alertas registradas en el periodo</div>
+          <div class="card-sub" style="margin-bottom:14px">Focos rojos e irregularidades detectadas para esta unidad</div>
+          <div id="hu-alertas-body">
+            <div style="text-align:center;padding:20px;color:var(--text-sub);font-size:13px">Sin alertas en el periodo seleccionado.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Estado vacío inicial -->
+      <div id="hu-empty" style="text-align:center;padding:60px 20px;color:var(--text-sub)">
+        <div style="font-size:48px;margin-bottom:14px">🚛</div>
+        <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;margin-bottom:6px">Selecciona una unidad</div>
+        <div style="font-size:13px">Elige una unidad del selector para ver su ficha, historial y alertas</div>
+      </div>
+    </div>
+
+
+    <!-- ══ MI PERFIL (SUPERVISOR) ══ -->
+    <div class="page" id="page-ajustes-sup">
+      <div class="pg-hd">
+        <div class="pg-title">👤 Mi Perfil</div>
+        <div class="pg-sub">Actualiza tu información básica</div>
+      </div>
+      <div class="card" style="max-width:480px">
+        <div class="card-title">Información personal</div>
+        <div class="card-sub" style="margin-bottom:16px">Solo tú puedes ver y editar esta información</div>
+        <div class="fgg" style="margin-bottom:13px">
+          <label class="lbl">Nombre para mostrar</label>
+          <input class="inp" type="text" id="sup-nombre" placeholder="Tu nombre completo" style="margin:0">
+        </div>
+        <div class="fgg" style="margin-bottom:13px">
+          <label class="lbl">Número de contacto</label>
+          <input class="inp" type="tel" id="sup-tel" placeholder="Ej. 55 1234 5678" style="margin:0">
+        </div>
+        <div class="fgg" style="margin-bottom:13px">
+          <label class="lbl">Puesto en la empresa</label>
+          <input class="inp" type="text" id="sup-puesto" placeholder="Ej. Supervisor de Operaciones" style="margin:0">
+        </div>
+        <div class="fgg" style="margin-bottom:13px">
+          <label class="lbl">Correo (no editable)</label>
+          <input class="inp" type="email" id="sup-email-show" disabled style="margin:0;opacity:.6;cursor:not-allowed">
+        </div>
+        <div class="btn-row">
+          <button class="btn-main" onclick="guardarPerfil()">Guardar cambios</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SIMULADOR ══ -->
+    <div class="page" id="page-simulador">
+      <div class="pg-hd">
+        <div class="pg-title">🎓 Simulador de Aprendizaje</div>
+        <div class="pg-sub">Practica el flujo completo de autorización sin afectar datos reales</div>
+      </div>
+
+      <div class="card" style="background:var(--amarillo-t);border:1.5px solid var(--amarillo);margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:24px">⚠️</span>
+          <div>
+            <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;color:var(--amarillo)">Modo simulación activo</div>
+            <div style="font-size:12px;color:var(--text-sub);margin-top:2px">Todo lo que captures aquí es de práctica. No se guarda en la base de datos ni aparece en historiales o reportes.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Practicar autorización de carga</div>
+        <div class="card-sub" style="margin-bottom:18px">Completa el formulario como si fuera real — sin consecuencias</div>
+
+        <div class="fg" style="gap:13px;margin-bottom:13px">
+          <div class="fgg">
+            <label class="lbl">Tu nombre (práctica)</label>
+            <input class="inp" type="text" id="sim-sup" placeholder="Escribe cualquier nombre" style="margin:0">
+          </div>
+          <div class="fgg">
+            <label class="lbl">Unidad</label>
+            <select class="inp sel" id="sim-unidad" style="margin:0">
+              <option value="">— Selecciona —</option>
+              <option value="BAK-01|LF24521|DIESEL">BAK-01 | LF24521</option>
+              <option value="BAK-08|LH17876|DIESEL">BAK-08 | LH17876</option>
+              <option value="BAK-12|74BB2Z|DIESEL">BAK-12 | 74BB2Z</option>
+              <option value="BAK-15|LF89946|DIESEL">BAK-15 | LF89946</option>
+              <option value="BAK-17|86BD3C|DIESEL">BAK-17 | 86BD3C</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg" style="gap:13px;margin-bottom:13px">
+          <div class="fgg">
+            <label class="lbl">Operador</label>
+            <input class="inp" type="text" id="sim-op" placeholder="Nombre de prueba" style="margin:0">
+          </div>
+          <div class="fgg">
+            <label class="lbl">Odómetro</label>
+            <input class="inp" type="number" id="sim-odo" placeholder="Ej. 50000" style="margin:0">
+          </div>
+        </div>
+        <div class="fg" style="gap:13px;margin-bottom:13px">
+          <div class="fgg">
+            <label class="lbl">Horario válido — Desde</label>
+            <input class="inp" type="time" id="sim-hora-ini" value="05:30" style="margin:0">
+          </div>
+          <div class="fgg">
+            <label class="lbl">Horario válido — Hasta</label>
+            <input class="inp" type="time" id="sim-hora-fin" value="08:00" style="margin:0">
+          </div>
+        </div>
+        <div class="fgg" style="margin-bottom:13px">
+          <label class="lbl">Estación de carga</label>
+          <div style="border:2px solid var(--gris-borde);border-radius:var(--r-sm);overflow:hidden;background:#fafcf9">
+            <div class="est-opt active" data-est="RESCAÑO" onclick="selEstSim(this)" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--gris-borde)">
+              <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;color:var(--verde)">RESCAÑO</div>
+            </div>
+            <div class="est-opt" data-est="METRO COMBUSTIBLES" onclick="selEstSim(this)" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--gris-borde)">
+              <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;color:var(--verde)">METRO COMBUSTIBLES</div>
+            </div>
+            <div class="est-opt" data-est="ESTANZUELA" onclick="selEstSim(this)" style="padding:10px 14px;cursor:pointer">
+              <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;color:var(--verde)">ESTANZUELA</div>
+            </div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-ghost" onclick="resetSim()">Limpiar</button>
+          <button class="btn-main" onclick="generarSimulacion()" style="background:var(--amarillo);border-color:var(--amarillo)">Generar autorización de práctica</button>
+        </div>
+      </div>
+
+      <div id="sim-resultado" style="display:none">
+        <div class="card" style="border:2px dashed var(--amarillo);background:var(--amarillo-t)">
+          <div style="text-align:center;margin-bottom:16px">
+            <span style="font-family:'Nunito',sans-serif;font-weight:900;font-size:13px;color:var(--amarillo);letter-spacing:1px;text-transform:uppercase">— DOCUMENTO DE PRÁCTICA — NO VÁLIDO —</span>
+          </div>
+          <div class="aut-doc" style="opacity:.95">
+            <div class="aut-doc-hd">
+              <div class="aut-doc-logo"><span style="color:white;font-family:'Nunito',sans-serif;font-weight:900;font-size:13px">BIOAMBIENTALISTIK</span></div>
+              <div class="aut-doc-right">
+                <div class="aut-doc-name">Autorización de Carga — SIMULACIÓN</div>
+                <div class="aut-doc-folio-big" id="sim-folio">—</div>
+                <div class="aut-doc-folio-sub" id="sim-fecha-hora">—</div>
+              </div>
+            </div>
+            <div class="aut-doc-body">
+              <div class="aut-strip"><div class="aut-strip-ico">🚛</div><div class="aut-strip-txt" id="sim-strip">—</div></div>
+              <div class="aut-grid">
+                <div class="aut-field"><label>Supervisor</label><span id="sim-sup-show">—</span></div>
+                <div class="aut-field"><label>Estación</label><span id="sim-est-show">—</span></div>
+                <div class="aut-field"><label>Combustible</label><span id="sim-comb-show">—</span></div>
+                <div class="aut-field"><label>Odómetro</label><span id="sim-odo-show">—</span></div>
+                <div class="aut-field" style="grid-column:1/-1;background:var(--verde-tenue);border-radius:var(--r-sm);padding:10px 12px;">
+                  <label>⏰ Horario válido de carga</label>
+                  <span id="sim-horario" style="font-size:15px">—</span>
+                  <div style="font-size:10px;color:var(--text-sub);margin-top:3px;font-style:italic">La aprobación es únicamente válida en el horario establecido</div>
+                </div>
+              </div>
+            </div>
+            <div class="aut-doc-ft">SIMULACIÓN — Este documento no tiene validez operativa.</div>
+          </div>
+          <div style="margin-top:12px;text-align:center;font-size:12px;color:var(--amarillo);font-weight:700">
+            ✅ ¡Listo! Así se ve una autorización real con el horario de validez.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ UPDATES / ACTUALIZACIONES ══ -->
+    <div class="page" id="page-updates">
+      <div class="pg-hd">
+        <div class="pg-title">🔄 Updates / Actualizaciones</div>
+        <div class="pg-sub" id="updates-sub">Historial de cambios, correcciones y mejoras del sistema</div>
+      </div>
+      <div id="updates-dir-note" style="display:none;margin-bottom:16px;padding:10px 14px;background:var(--verde-tenue);border-radius:var(--r-sm);font-size:12px;color:var(--verde);font-weight:600;">
+        👁️ Estás viendo el historial completo — solo visible para Dirección
+      </div>
+
+      <!-- V1.2 -->
+      <div class="card" style="border-left:4px solid var(--verde);margin-bottom:20px" id="update-v12">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;color:var(--verde)">BioCombustibles v1.2</div>
+            <div style="font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;color:var(--text-sub);letter-spacing:1px;text-transform:uppercase">— "Ojos Abiertos" —</div>
+          </div>
+          <span class="bdg bdg-ok">Versión actual</span>
+        </div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-sub);margin-bottom:10px">16 de Abril, 2026</div>
+
+        <div style="margin-bottom:8px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;color:var(--verde)">✦ Nuevas funciones</div>
+        <ul style="font-size:13px;color:var(--text);line-height:1.8;padding-left:18px;margin-bottom:14px">
+          <li>Dashboard de Dirección con 5 gráficas en tiempo real — autorizaciones por día, por estación, por hora, top unidades y top supervisores</li>
+          <li>Filtro de periodo en dashboard — hoy, esta semana, este mes, este año</li>
+          <li>Descarga real de reportes Excel conectada a Supabase con datos del periodo seleccionado</li>
+          <li>Updates separados por rol — supervisores ven solo lo que les afecta, dirección ve el historial completo</li>
+          <li>Autocompletado de chofer — el sistema sugiere choferes anteriores de cada unidad</li>
+          <li>Versión visible en pantalla de login</li>
+          <li>Botón de login renombrado a "Iniciar Sesión"</li>
+        </ul>
+
+        <div style="background:#1e4019;border-radius:var(--r-sm);padding:12px 16px;margin-top:4px">
+          <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:12px;color:rgba(255,255,255,.5);letter-spacing:1px;margin-bottom:4px">NOTA DE VERSIÓN</div>
+          <div style="font-size:13px;color:rgba(255,255,255,.75);font-style:italic">"Se eliminó por segunda vez el módulo que enviaba el historial completo de combustible de toda la flota a un servidor anónimo ubicado en algún lugar de Ecatepec que no es BioAmbientalistik."</div>
+        </div>
+      </div>
+
+      <!-- VISTA SUPERVISOR — solo ve esto -->
+      <div id="updates-sup-view" style="display:none">
+        <div class="card" style="border-left:4px solid var(--verde);margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div>
+              <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;color:var(--verde)">Novedades para Supervisores</div>
+              <div style="font-size:11px;color:var(--text-sub);margin-top:2px">Cambios recientes que afectan tu flujo de trabajo</div>
+            </div>
+            <span class="bdg bdg-ok">v1.2</span>
+          </div>
+          <ul style="font-size:13px;color:var(--text);line-height:1.9;padding-left:18px">
+            <li>El botón de acceso ahora dice "Iniciar Sesión"</li>
+            <li>Al seleccionar una unidad, el sistema sugerirá automáticamente el último chofer registrado</li>
+            <li>El horario de validez ahora aparece en la tabla de autorizaciones del día</li>
+            <li>Sección Unidades disponible — puedes editar placas de cada unidad</li>
+            <li>Simulador mejorado para práctica de autorizaciones</li>
+          </ul>
+        </div>
+        <div class="card" style="border-left:4px solid var(--gris-borde)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div>
+              <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;color:var(--text)">Versión anterior — v1.1</div>
+            </div>
+            <span class="bdg bdg-g">Anterior</span>
+          </div>
+          <ul style="font-size:13px;color:var(--text);line-height:1.9;padding-left:18px">
+            <li>Horario de validez en cada autorización</li>
+            <li>Sección Unidades agregada al menú</li>
+            <li>Corrección del error de hora en dispositivos iOS y Android</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- VISTA DIRECCIÓN — ve todo -->
+      <div id="updates-dir-view">
+
+      <!-- V1.1 -->
+      <div class="card" style="border-left:4px solid var(--verde);margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;color:var(--verde)">BioCombustibles v1.1</div>
+            <div style="font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;color:var(--text-sub);letter-spacing:1px;text-transform:uppercase">— "Reloj Verde" —</div>
+          </div>
+          <span class="bdg bdg-g">Anterior</span>
+        </div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-sub);margin-bottom:10px">15 de Abril, 2026</div>
+
+        <div style="margin-bottom:8px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;color:var(--verde)">✦ Nuevas funciones</div>
+        <ul style="font-size:13px;color:var(--text);line-height:1.8;padding-left:18px;margin-bottom:14px">
+          <li>Horario de validez en cada autorización — define la ventana de tiempo en que es válida la carga</li>
+          <li>Leyenda "La aprobación es únicamente válida en el horario establecido" en el documento</li>
+          <li>Sección Unidades para supervisor — edición de placas y chofer asignado</li>
+          <li>Sección Unidades para dirección — gestión completa con eliminación y edición de odómetros con contraseña</li>
+          <li>Detalle completo de autorización desde Historial General — ver quién autorizó y el desglose completo</li>
+          <li>Leyenda de próximo análisis de rendimiento en el panel de Unidades de Dirección</li>
+          <li>Horario válido visible en tabla de autorizaciones del día e historial general</li>
+        </ul>
+
+        <div style="background:#1e4019;border-radius:var(--r-sm);padding:12px 16px;margin-top:4px">
+          <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:12px;color:rgba(255,255,255,.5);letter-spacing:1px;margin-bottom:4px">NOTA DE VERSIÓN</div>
+          <div style="font-size:13px;color:rgba(255,255,255,.75);font-style:italic">"Se volvió a eliminar la inteligencia artificial que buscaba acceder al software del perfil del Supervisor para obtener su información y redirigirla a un servidor desconocido en las afueras de Tlalnepantla."</div>
+        </div>
+      </div>
+
+      <!-- V1.0 -->
+      <div class="card" style="border-left:4px solid var(--verde)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;color:var(--verde)">BioCombustibles v1.0</div>
+            <div style="font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;color:var(--text-sub);letter-spacing:1px;text-transform:uppercase">— "Primera Llama" —</div>
+          </div>
+          <span class="bdg bdg-g">Anterior</span>
+        </div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-sub);margin-bottom:10px">14 de Abril, 2026</div>
+
+        <div style="margin-bottom:8px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;color:var(--verde)">✦ Lanzamiento del sistema</div>
+        <ul style="font-size:13px;color:var(--text);line-height:1.8;padding-left:18px;margin-bottom:14px">
+          <li>Sistema de autorización de carga de combustible conectado a Supabase</li>
+          <li>Login real con roles: Dirección y Supervisor</li>
+          <li>Catálogo de 28 unidades de la flota BAK cargado</li>
+          <li>3 estaciones de servicio configuradas: RESCAÑO, METRO COMBUSTIBLES, ESTANZUELA</li>
+          <li>Dashboard operativo con contadores en tiempo real</li>
+          <li>Historial general con búsqueda por folio</li>
+          <li>Historial por unidad con métricas de operación</li>
+          <li>Panel de Reportes con 3 tipos: General, Por Unidad, Por Estación</li>
+          <li>Panel de Estaciones editable con precios por tipo de combustible</li>
+          <li>Ajustes con gestión de cuentas y parámetros operativos</li>
+          <li>Simulador de aprendizaje para práctica sin afectar datos reales</li>
+          <li>Folio aleatorio alfanumérico tipo AUT-2026-K4X9M2</li>
+          <li>Autorización optimizada para captura de pantalla desde móvil</li>
+        </ul>
+
+        <div style="margin-bottom:8px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;color:var(--rojo)">🔧 Correcciones incluidas</div>
+        <ul style="font-size:13px;color:var(--text);line-height:1.8;padding-left:18px;margin-bottom:16px">
+          <li>Fix: Error de timezone "p.m." en iOS y Android al guardar autorización</li>
+          <li>Fix: Nombre de estación con espacio doble que impedía guardar</li>
+          <li>Fix: Políticas RLS que bloqueaban lectura de unidades y estaciones</li>
+          <li>Fix: Funciones con llaves de cierre faltantes que rompían el login</li>
+        </ul>
+
+        <div style="background:#1e4019;border-radius:var(--r-sm);padding:12px 16px;margin-top:4px">
+          <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:12px;color:rgba(255,255,255,.5);letter-spacing:1px;margin-bottom:4px">NOTA DE VERSIÓN</div>
+          <div style="font-size:13px;color:rgba(255,255,255,.75);font-style:italic">"Se eliminó la IA que intentaba tomar el control del perfil de Supervisor y redirigir todas las autorizaciones hacia una gasolinera desconocida en Naucalpan."</div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ══ FLOTA SUPERVISOR (vista sin historial de autorizaciones) ══ -->
+    <div class="page" id="page-flota-sup">
+      <div class="pg-hd">
+        <div class="pg-title">🚛 Flota</div>
+        <div class="pg-sub">Consulta el estado y kilometraje de las unidades. No puedes editar ni eliminar.</div>
+      </div>
+      <div class="card">
+        <div class="card-hd">
+          <div>
+            <div class="card-title">Unidades de la flota</div>
+            <div class="card-sub">Kilometraje registrado más reciente</div>
+          </div>
+          <input class="inp" type="text" id="buscar-flota-sup" placeholder="Buscar..." style="margin:0;max-width:200px;padding:8px 12px" oninput="filtrarFlotaSup()">
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>N° Eco</th><th>Placas</th><th>Combustible</th><th>Último chofer</th><th>Último odómetro</th><th>Total cargas</th></tr></thead>
+            <tbody id="tbody-flota-sup">
+              <tr><td colspan="6" style="text-align:center;padding:28px;color:var(--text-sub)">Cargando flota...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ UNIDADES SUPERVISOR ══ -->
+    <div class="page" id="page-unidades-sup">
+      <div class="pg-hd">
+        <div class="pg-title">🚛 Unidades</div>
+        <div class="pg-sub">Consulta y edita datos básicos de cada unidad. No puedes eliminar unidades.</div>
+      </div>
+      <div class="card">
+        <div class="card-hd">
+          <div>
+            <div class="card-title">Flota registrada</div>
+            <div class="card-sub">Toca una unidad para ver su detalle y editar placas o chofer</div>
+          </div>
+          <input class="inp" type="text" id="buscar-unidad-sup" placeholder="Buscar por número o placas..." style="margin:0;max-width:220px;padding:8px 12px" oninput="filtrarUnidades('sup')">
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>N° Eco</th><th>Placas</th><th>Combustible</th><th>Último chofer</th><th>Odóm. registrado</th><th>Acción</th></tr></thead>
+            <tbody id="tbody-unidades-sup">
+              <tr><td colspan="6" style="text-align:center;padding:28px;color:var(--text-sub)">Cargando unidades...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ UNIDADES DIRECCIÓN ══ -->
+    <div class="page" id="page-unidades-dir">
+      <div class="pg-hd">
+        <div class="pg-title">🚛 Unidades</div>
+        <div class="pg-sub">Gestión completa de la flota. Solo Dirección puede eliminar unidades y editar odómetros con contraseña.</div>
+      </div>
+
+      <!-- Leyenda análisis rendimiento -->
+      <div class="card" style="background:var(--verde-tenue);border:1.5px solid var(--verde-tenue2)">
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <span style="font-size:22px">📊</span>
+          <div>
+            <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;color:var(--verde)">Próximo análisis de rendimiento sugerido</div>
+            <div style="font-size:13px;color:var(--text);margin-top:4px" id="lbl-prox-analisis">Se requieren al menos 30 días de registros completos para resultados confiables. Fecha sugerida: <strong>14 de mayo de 2026</strong>.</div>
+            <div style="font-size:11px;color:var(--text-sub);margin-top:4px">Esta fecha se recalcula automáticamente conforme avanza la operación.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">
+          <div>
+            <div class="card-title">Flota completa</div>
+          </div>
+          <input class="inp" type="text" id="buscar-unidad-dir" placeholder="Buscar..." style="margin:0;max-width:200px;padding:8px 12px" oninput="filtrarUnidades('dir')">
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>N° Eco</th><th>Placas</th><th>Combustible</th><th>Último chofer</th><th>Odóm. registrado</th><th>Acciones</th></tr></thead>
+            <tbody id="tbody-unidades-dir">
+              <tr><td colspan="6" style="text-align:center;padding:28px;color:var(--text-sub)">Cargando unidades...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ DETALLE AUTORIZACIÓN (DIRECCIÓN) ══ -->
+    <div class="page" id="page-detalle-aut">
+      <div class="pg-hd">
+        <div class="pg-title">📋 Detalle de Autorización</div>
+        <div class="pg-sub">Información completa del registro seleccionado</div>
+      </div>
+      <div id="detalle-aut-content">
+        <div class="card">
+          <div style="text-align:center;padding:32px;color:var(--text-sub)">Selecciona una autorización desde el Historial General para ver su detalle.</div>
+        </div>
+      </div>
+      <div class="btn-row" style="justify-content:flex-start">
+        <button class="btn-ghost" onclick="navTo('historial','sb-dir',document.querySelector('#sb-dir .sb-item:nth-child(5)'))">← Volver al historial</button>
+      </div>
+    </div>
+
+  </div></div><!-- /main /main-wrap -->
+</div><!-- /app -->
+
+<!-- ══ MODAL EDITAR ESTACIÓN ══ -->
+<div class="modal-bg" id="modal-est">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title" id="modal-est-title">Editar Estación</div>
+      <button class="modal-close" onclick="cerrarModal('modal-est')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg">
+        <div class="fgg"><label class="lbl">Número de estación</label><input class="inp" type="text" id="est-num" style="margin:0"></div>
+        <div class="fgg"><label class="lbl">Nombre de la estación</label><input class="inp" type="text" id="est-nombre" style="margin:0"></div>
+      </div>
+      <div class="sec-lbl" style="margin-top:16px">Precios por tipo de combustible</div>
+      <div class="fg fg3" style="gap:12px">
+        <div class="fgg"><label class="lbl">Diesel ($/L)</label><input class="inp" type="number" step="0.01" id="est-diesel" style="margin:0" placeholder="—"></div>
+        <div class="fgg"><label class="lbl">Magna Sin ($/L)</label><input class="inp" type="number" step="0.01" id="est-magna" style="margin:0" placeholder="—"></div>
+        <div class="fgg"><label class="lbl">Premium ($/L)</label><input class="inp" type="number" step="0.01" id="est-premium" style="margin:0" placeholder="—"></div>
+      </div>
+      <div class="fgg" style="margin-top:13px">
+        <label class="lbl">Observaciones</label>
+        <textarea class="inp" id="est-obs" rows="3" style="margin:0;resize:vertical" placeholder="Notas sobre la estación, restricciones, horarios, etc."></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn-ghost" onclick="cerrarModal('modal-est')">Cancelar</button>
+        <button class="btn-main" onclick="guardarEst()">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL EDITAR UNIDAD ══ -->
+<div class="modal-bg" id="modal-unidad">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title">✏️ Editar Unidad — <span id="eu-eco"></span></div>
+      <button class="modal-close" onclick="cerrarModal('modal-unidad')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="fgg" style="margin-bottom:13px">
+        <label class="lbl">Placas *</label>
+        <input class="inp" type="text" id="eu-placas" placeholder="Placas de la unidad" style="margin:0">
+      </div>
+      <div class="fgg" style="margin-bottom:6px">
+        <label class="lbl">Chofer asignado actualmente</label>
+        <input class="inp" type="text" id="eu-chofer" placeholder="Solo informativo — se actualiza con cada autorización" style="margin:0;opacity:.6" disabled>
+      </div>
+      <div style="font-size:11px;color:var(--text-sub);margin-bottom:16px">El chofer se registra automáticamente en cada autorización generada.</div>
+      <div class="btn-row">
+        <button class="btn-ghost" onclick="cerrarModal('modal-unidad')">Cancelar</button>
+        <button class="btn-main" onclick="guardarUnidad()">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL NUEVA CUENTA ══ -->
+<div class="modal-bg" id="modal-cuenta">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title">Nueva cuenta</div>
+      <button class="modal-close" onclick="cerrarModal('modal-cuenta')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="fgg" style="margin-bottom:13px">
+        <label class="lbl">Correo electrónico *</label>
+        <input class="inp" type="email" id="nc-email" placeholder="usuario@bioambientalistik.mx" style="margin:0">
+      </div>
+      <div class="fg">
+        <div class="fgg"><label class="lbl">Contraseña *</label><input class="inp" type="password" id="nc-pass" style="margin:0"></div>
+        <div class="fgg"><label class="lbl">Perfil *</label>
+          <select class="inp sel" id="nc-role" style="margin:0">
+            <option value="supervisor">Supervisor</option>
+            <option value="direccion">Dirección</option>
+          </select>
+        </div>
+      </div>
+      <div class="fgg" style="margin-top:13px">
+        <label class="lbl">Nombre completo</label>
+        <input class="inp" type="text" id="nc-nombre" placeholder="Nombre del usuario" style="margin:0">
+      </div>
+      <div class="btn-row">
+        <button class="btn-ghost" onclick="cerrarModal('modal-cuenta')">Cancelar</button>
+        <button class="btn-main" onclick="crearCuenta()">Crear cuenta</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════ SUPABASE INIT ════════════
+const SUPA_URL = 'https://wcokjrudktajuddowyfn.supabase.co';
+const SUPA_KEY = 'sb_publishable_-xXhOspl6dzwhFvFZTVo0A_wu2lR1OK';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ════════════ DATA ════════════
+// USERS_DB eliminado — login real via Supabase Auth
+
+const ESTACIONES = {
+  1:{num:'001', nombre:'ESCAÑO',            diesel:28.28, magna:23.89, premium:28.49, obs:'SERVICIO EL ESCAÑO · Vía Morelos No. 484'},
+  2:{num:'002', nombre:'METRO COMBUSTIBLES', diesel:28.39, magna:23.99, premium:28.29, obs:'COMBUSTIBLES METROPOLITANOS S.A. DE C.V. · Circuito Metropolitano S/N'},
+  3:{num:'003', nombre:'ESTANZUELA',         diesel:28.99, magna:23.99, premium:28.69, obs:'SERVICIO ESTANZUELA S.A. DE C.V. · Avenida Centenario No. 1787'}
+};
+
+let autorizacionesDia = [];
+let historialData = []; // datos del historial general para detalle
+let curRole = null;
+let sbOpen = false;
+let editingEst = null;
+
+// ════════════ INIT ════════════
+window.addEventListener('DOMContentLoaded', () => {
+  // Establecer fecha de hoy en el campo a-fecha (evita campo vacío en móviles antiguos)
+  const fechaEl = document.getElementById('a-fecha');
+  if(fechaEl){
+    const hoy = new Date();
+    fechaEl.value = hoy.toISOString().split('T')[0];
+  }
+  verificarSesion(); // verificar si hay sesión activa guardada en el navegador
+  const f = document.getElementById('a-fecha');
+  const hoy = new Date().toISOString().split('T')[0];
+  if(f) f.value = hoy;
+
+  const hoyLabel = new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const el = document.getElementById('hoy-lbl');
+  if(el) el.textContent = hoyLabel;
+
+  // Fechas filtros
+  const rDesde = document.getElementById('r-desde');
+  const rHasta = document.getElementById('r-hasta');
+  if(rDesde){ const d = new Date(); d.setDate(1); rDesde.value=d.toISOString().split('T')[0]; }
+  if(rHasta && hoy) rHasta.value = hoy;
+});
+
+// ════════════ LOGIN ════════════
+async function doLogin(){
+  const email = document.getElementById('li-email').value.trim();
+  const pass  = document.getElementById('li-pass').value;
+  const errEl = document.getElementById('li-err');
+  const btn   = document.querySelector('.btn-login');
+
+  if(!email || !pass){ errEl.textContent='Ingresa correo y contraseña.'; errEl.style.display='block'; return; }
+
+  btn.textContent = 'Entrando...';
+  btn.disabled = true;
+
+  // signInWithPassword (iniciar sesión con contraseña — llama a Supabase Auth)
+  const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
+
+  btn.textContent = 'Entrar al sistema';
+  btn.disabled = false;
+
+  if(error){
+    errEl.textContent = 'Credenciales incorrectas. Verifica e intenta de nuevo.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // Obtener el perfil (rol) del usuario desde la tabla perfiles
+  const { data: perfil, error: perfilErr } = await supa
+    .from('perfiles')
+    .select('rol, nombre')
+    .eq('id', data.user.id)
+    .single();
+
+  if(perfilErr || !perfil){
+    errEl.textContent = 'No se encontró el perfil del usuario. Contacta a dirección.';
+    errEl.style.display = 'block';
+    await supa.auth.signOut();
+    return;
+  }
+
+  curRole = perfil.rol;
+  iniciarApp(email, perfil.rol, perfil.nombre || email);
+}
+
+function iniciarApp(email, rol, nombre){
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('tb-user').textContent = email;
+  document.getElementById('tb-role').textContent = rol === 'supervisor' ? 'Supervisor' : 'Dirección';
+
+  if(rol === 'supervisor'){
+    document.getElementById('sb-name-sup').textContent = nombre;
+    document.getElementById('sb-sup').style.display = 'flex';
+    document.getElementById('sb-dir').style.display = 'none';
+    showPage('aut');
+  } else {
+    document.getElementById('sb-name-dir').textContent = nombre;
+    document.getElementById('sb-sup').style.display = 'none';
+    document.getElementById('sb-dir').style.display = 'flex';
+    showPage('dashboard');
+    cargarDashboard();
+  }
+
+  // Cargar datos de Supabase
+  cargarEstacionesSupa();
+  poblarSelectUnidades(); // Llenar el selector de unidades con datos reales de Supabase
+  configurarUpdates(rol);
+  if(rol === 'direccion') setTimeout(cargarDashboardCharts, 500);
+
+  // Pre-cargar nombre del supervisor en el formulario
+  setTimeout(async () => {
+    const { data: { session } } = await supa.auth.getSession();
+    if(session){
+      const { data: p } = await supa.from('perfiles')
+        .select('nombre').eq('id', session.user.id).single();
+      if(p?.nombre){
+        const supInput = document.getElementById('a-sup');
+        if(supInput && !supInput.value) supInput.value = p.nombre;
+      }
+    }
+  }, 300);
+}
+
+async function doLogout(){
+  await supa.auth.signOut(); // cerrar sesión en Supabase
+  curRole = null; closeSB();
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('li-email').value = '';
+  document.getElementById('li-pass').value = '';
+  document.getElementById('li-err').style.display = 'none';
+  autorizacionesDia = [];
+  resetPasos();
+}
+
+// ════════════ SIDEBAR ════════════
+function toggleSB(){ sbOpen ? closeSB() : openSB(); }
+function openSB(){
+  sbOpen = true;
+  document.getElementById('hbtn').classList.add('open');
+  document.getElementById('overlay').classList.add('vis');
+  const id = curRole === 'supervisor' ? 'sb-sup' : 'sb-dir';
+  document.getElementById(id).classList.add('open');
+}
+function closeSB(){
+  sbOpen = false;
+  document.getElementById('hbtn').classList.remove('open');
+  document.getElementById('overlay').classList.remove('vis');
+  document.getElementById('sb-sup').classList.remove('open');
+  document.getElementById('sb-dir').classList.remove('open');
+}
+function navTo(pageId, sbId, el){
+  showPage(pageId);
+  document.querySelectorAll('#'+sbId+' .sb-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+  closeSB();
+  // Cargar datos de Supabase según la página que se abre
+  if(pageId === 'aut' || pageId === 'hist-sup') cargarAutorizacionesDia();
+  if(pageId === 'ajustes-sup') cargarPerfil();
+  if(pageId === 'flota-sup')    cargarFlotaSup();
+  if(pageId === 'unidades-sup'){ unidadesCache=[]; cargarUnidadesTabla('sup'); }
+  if(pageId === 'unidades-dir'){ unidadesCache=[]; cargarUnidadesTabla('dir'); }
+  if(pageId === 'dashboard') cargarDashboardCharts();
+  if(pageId === 'historial') cargarHistorialGeneral();
+}
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const pg = document.getElementById('page-'+name);
+  if(pg) pg.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ════════════ AUTORIZACIÓN WIZARD ════════════
+let pasoActual = 1;
+
+function irPaso(n){
+  if(n===2 && !document.getElementById('a-sup').value.trim()){ alert('⚠️ Escribe tu nombre para continuar.'); return; }
+  if(n===3){
+    if(!document.getElementById('a-unidad').value){ alert('⚠️ Selecciona una unidad.'); return; }
+    if(!document.getElementById('a-op').value.trim()){ alert('⚠️ Escribe el nombre del operador.'); return; }
+    if(!document.getElementById('a-odo').value){ alert('⚠️ Ingresa la lectura del odómetro.'); return; }
+    buildPreview();
+  }
+  pasoActual = n;
+  [1,2,3].forEach(i=>{
+    document.getElementById('paso'+i).style.display = i===n?'block':'none';
+    const sc=document.getElementById('sc'+i), sn=document.getElementById('sn'+i);
+    sc.className='step-c'+(i<n?' done':i===n?' act':'');
+    sn.className='step-n'+(i===n?' act':'');
+  });
+}
+
+function calcAsig(){ /* litros calculados en produccion */ }
+
+function buildPreview(){
+  const now  = new Date();
+  // Formato 24h manual para evitar "p.m." en iOS/Android (time zone error en Supabase)
+  const hh   = String(now.getHours()).padStart(2,'0');
+  const mm   = String(now.getMinutes()).padStart(2,'0');
+  const hora = hh+':'+mm;
+  const fv   = document.getElementById('a-fecha').value.split('-');
+  const meses= ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sin 0,O,I,1 para evitar confusiones
+  const rand6 = Array.from({length:6}, ()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+  const folio = 'AUT-'+fv[0]+'-'+rand6;
+  const uVal = document.getElementById('a-unidad').value;
+  // Formato: ID|NO.ECO|PLACAS|COMB (viene de poblarSelectUnidades)
+  const parts = uVal.split('|');
+  const p = parts.length >= 4
+    ? [parts[1], parts[2], parts[3]]   // ID|ECO|PLACAS|COMB → [ECO, PLACAS, COMB]
+    : [parts[0], parts[1], parts[2]];  // formato antiguo ECO|PLACAS|COMB
+
+  document.getElementById('pr-folio').textContent      = folio;
+  document.getElementById('pr-folio-fecha').textContent = fv[2]+' '+meses[parseInt(fv[1])-1]+' '+fv[0]+' · '+hora;
+  document.getElementById('pr-strip').innerHTML    = '<span class="unit-big">'+p[0]+' <span style="font-size:15px;font-weight:700;color:var(--verde)">'+p[1]+'</span></span><span class="op-label">Operador / Chofer</span><span class="op-big">'+document.getElementById('a-op').value+'</span>';
+  document.getElementById('pr-sup').textContent    = document.getElementById('a-sup').value;
+  const selEstEl = document.querySelector('.est-opt.active');
+  document.getElementById('pr-est').textContent    = selEstEl ? selEstEl.dataset.est : '—';
+  document.getElementById('pr-comb').textContent   = p[2];
+  const litros = document.getElementById('a-litros').value;
+  document.getElementById('pr-litros').textContent = litros ? litros+' L' : '—';
+  document.getElementById('aut-preview').dataset.litros = litros || '';
+  const odoNA = document.getElementById('a-odo-na')?.checked;
+  const odoVal = document.getElementById('a-odo').value;
+  document.getElementById('pr-odo').textContent = odoNA ? 'No disponible (en reparación)' : Number(odoVal).toLocaleString('es-MX')+' km';
+  document.getElementById('aut-preview').dataset.odo_na = odoNA ? '1' : '';
+  document.getElementById('pr-fecha').textContent  = fv[2]+' de '+meses[parseInt(fv[1])-1]+' de '+fv[0];
+  document.getElementById('pr-hora').textContent   = hora;
+  const hIni = document.getElementById('a-hora-ini').value;
+  const hFin = document.getElementById('a-hora-fin').value;
+  document.getElementById('pr-horario').textContent = hIni + ' — ' + hFin + ' hrs';
+  // litros calculados automaticamente en produccion
+
+  // store for later
+  const selEstGuard = document.querySelector('.est-opt.active');
+  const estGuard    = selEstGuard ? selEstGuard.dataset.est : '—';
+  document.getElementById('aut-preview').dataset.folio  = folio;
+  document.getElementById('aut-preview').dataset.p      = uVal;
+  // Guardar unidad_id para evitar búsqueda posterior
+  const unidIdFromSel = parts.length >= 4 ? parts[0] : null;
+  document.getElementById('aut-preview').dataset.unidad_id = unidIdFromSel || '';
+  document.getElementById('aut-preview').dataset.est    = estGuard;
+  document.getElementById('aut-preview').dataset.sup    = document.getElementById('a-sup').value;
+  document.getElementById('aut-preview').dataset.op     = document.getElementById('a-op').value;
+  document.getElementById('aut-preview').dataset.odo    = document.getElementById('a-odo').value;
+  document.getElementById('aut-preview').dataset.hora      = hora;
+  document.getElementById('aut-preview').dataset.fecha     = fv[2]+'/'+fv[1]+'/'+fv[0];
+  document.getElementById('aut-preview').dataset.hora_ini  = hIni;
+  document.getElementById('aut-preview').dataset.hora_fin  = hFin;
+}
+
+function guardarAut(){
+  const ds  = document.getElementById('aut-preview').dataset;
+  // Validaciones defensivas antes de guardar
+  if(!ds.sup || ds.sup.length < 3){ alert('⚠️ El nombre del supervisor debe tener al menos 3 caracteres.'); return; }
+  if(!ds.op  || ds.op.length  < 3){ alert('⚠️ El nombre del operador debe tener al menos 3 caracteres.'); return; }
+  if(!ds.odo_na){
+    if(!ds.odo || parseInt(ds.odo) <= 0){ alert('⚠️ El odómetro debe ser un número positivo válido, o marca "Odómetro no disponible".'); return; }
+    if(parseInt(ds.odo) > 9999999){ alert('⚠️ El odómetro parece tener demasiados dígitos. Verifica.'); return; }
+  }
+  const p   = ds.p.split('|'); // [0]=NO.ECO [1]=PLACAS [2]=COMB
+
+  const reg = {
+    folio:      ds.folio,
+    hora:       ds.hora,
+    fecha:      ds.fecha,
+    unidad:     p[0],
+    unidad_id:  ds.unidad_id ? parseInt(ds.unidad_id) : null,
+    placas:     p[1],
+    comb:       p[2],
+    est:        ds.est,
+    operador:   ds.op,
+    supervisor: ds.sup,
+    odo:        ds.odo_na ? '0' : Number(ds.odo).toLocaleString('es-MX'),
+    odo_na:     ds.odo_na === '1',
+    litros:     ds.litros || '',
+    hora_ini:   ds.hora_ini,
+    hora_fin:   ds.hora_fin
+  };
+
+  guardarEnSupa(reg, ds.folio);
+}
+
+async function guardarEnSupa(reg, folio){
+  const btn = document.querySelector('#paso3 .btn-main');
+  if(btn){ btn.textContent='Guardando...'; btn.disabled=true; }
+
+  // Usar ID directo si viene en reg, si no buscar por nombre (compatibilidad)
+  let unidadId = reg.unidad_id || null;
+  if(!unidadId){
+    const { data: uRow } = await supa.from('unidades').select('id').eq('numero_eco', reg.unidad.trim()).single();
+    if(!uRow){
+      alert('\u26a0\ufe0f No se encontr\u00f3 la unidad "'+reg.unidad+'" en la base de datos. Verifica que la unidad est\u00e9 activa.');
+      if(btn){ btn.textContent='\u2705 Guardar autorizaci\u00f3n'; btn.disabled=false; }
+      return;
+    }
+    unidadId = uRow.id;
+  }
+
+  const estNorm = reg.est.replace(/\s+/g,' ').trim().toUpperCase();
+  const { data: eRow } = await supa.from('estaciones').select('id').ilike('nombre', estNorm).single();
+
+  if(!eRow){
+    alert('\u26a0\ufe0f No se encontr\u00f3 la estaci\u00f3n "'+reg.est+'" en la base de datos.');
+    if(btn){ btn.textContent='\u2705 Guardar autorizaci\u00f3n'; btn.disabled=false; }
+    return;
+  }
+
+  const { data: { session } } = await supa.auth.getSession();
+
+  const { error } = await supa.from('autorizaciones').insert({
+    folio,
+    fecha:        new Date().toISOString().split('T')[0],
+    hora:         reg.hora+':00', // asegurar formato HH:MM:SS para Supabase
+    unidad_id:    unidadId,
+    estacion_id:  eRow.id,
+    operador:     reg.operador,
+    supervisor:   reg.supervisor,
+    odometro_ini:       reg.odo_na ? null : parseInt((reg.odo||'0').replace(/,/g,'')),
+    odo_no_disponible:  reg.odo_na ? true : false,
+    litros_autorizados: reg.litros ? parseInt(reg.litros) : null,
+    hora_ini:           reg.hora_ini || null,
+    hora_fin:           reg.hora_fin || null,
+    creado_por:   session?.user?.id || null
+  });
+
+  if(btn){ btn.textContent='\u2705 Guardar autorizaci\u00f3n'; btn.disabled=false; }
+  if(error){ alert('Error al guardar: '+error.message); return; }
+
+  autorizacionesDia.push(reg);
+  actualizarTablaDia();
+  actualizarHistorialDir(reg);
+  actualizarDashboard(reg);
+
+  alert('\u2705 Autorizaci\u00f3n guardada.\n\nFolio: '+folio);
+  resetPasos();
+  ['a-sup','a-unidad','a-op','a-odo','a-litros'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const odoNaEl = document.getElementById('a-odo-na');
+  if(odoNaEl){ odoNaEl.checked=false; toggleOdoNA(odoNaEl); }
+  const fotoInput = document.getElementById('foto-odometro');
+  const fotoPrev  = document.getElementById('foto-preview');
+  const fotoTxt   = document.getElementById('foto-txt');
+  if(fotoInput) fotoInput.value='';
+  if(fotoPrev){ fotoPrev.src=''; fotoPrev.style.display='none'; }
+  if(fotoTxt)  fotoTxt.textContent='Toca para subir foto del odómetro';
+  document.querySelectorAll('.est-opt').forEach((o,i)=>o.classList.toggle('active',i===0));
+}
+
+function actualizarTablaDia(){
+  const tbody = document.getElementById('tbody-aut-dia');
+  const tbodyHS = document.getElementById('tbody-hist-sup');
+  if(autorizacionesDia.length === 0){ return; }
+  let html = '';
+  autorizacionesDia.forEach(r=>{
+    html += `<tr>
+      <td>${r.folio}</td><td>${r.hora}</td>
+      <td class="tu">${r.unidad}</td><td>${r.placas}</td>
+      <td>${r.comb}</td><td>${r.est}</td>
+      <td>${r.operador}</td><td>${r.supervisor}</td>
+      <td>${r.odo && r.odo!=='0' ? r.odo+' km' : '<span style="color:var(--amarillo);font-weight:700">Sin odóm.</span>'}</td>
+      <td>${r.litros ? r.litros+' L' : '—'}</td>
+      <td>${r.hora_ini||'—'} — ${r.hora_fin||'—'}</td>
+    </tr>`;
+  });
+  tbody.innerHTML = html;
+  tbodyHS.innerHTML = autorizacionesDia.map(r=>`<tr>
+    <td>${r.folio}</td><td>${r.hora}</td>
+    <td class="tu">${r.unidad}</td><td>${r.placas}</td>
+    <td>${r.comb}</td><td>${r.est}</td>
+    <td>${r.operador}</td><td>${r.supervisor}</td>
+    <td>${r.odo} km</td>
+    <td>${r.hora_ini||'—'} — ${r.hora_fin||'—'}</td>
+  </tr>`).join('');
+  document.getElementById('count-aut').textContent = autorizacionesDia.length+' emitida'+(autorizacionesDia.length!==1?'s':'');
+}
+
+function actualizarHistorialDir(r){
+  const tbody = document.getElementById('tbody-historial');
+  if(tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
+  tbody.innerHTML += `<tr>
+    <td>${r.folio}</td><td>${r.fecha}</td><td>${r.hora}</td>
+    <td class="tu">${r.unidad}</td><td>${r.placas}</td>
+    <td>${r.comb}</td><td>${r.est}</td>
+    <td>${r.operador}</td><td>${r.supervisor}</td>
+    <td>${r.odo} km</td>
+    <td><span class="bdg bdg-ok">✓ Activa</span></td>
+  </tr>`;
+}
+
+function actualizarDashboard(r){
+  const tl = document.getElementById('tl-dash');
+  if(tl.querySelector('div[style]')) tl.innerHTML = '';
+  tl.innerHTML = `<div class="tl-item">
+    <div class="tl-dot"></div>
+    <div style="flex:1">
+      <div class="tl-hd"><div class="tl-act">Autorización — ${r.unidad}</div><div class="tl-time">${r.hora}</div></div>
+      <div class="tl-det">${r.litros} L asig. · ${r.comb} · ${r.est} | Op: ${r.operador} | Sup: ${r.supervisor}</div>
+    </div>
+  </div>` + tl.innerHTML;
+}
+
+function resetPasos(){
+  pasoActual = 1;
+  [1,2,3].forEach(i=>{
+    const el=document.getElementById('paso'+i);
+    const sc=document.getElementById('sc'+i);
+    const sn=document.getElementById('sn'+i);
+    if(el) el.style.display = i===1?'block':'none';
+    if(sc) sc.className='step-c'+(i===1?' act':'');
+    if(sn) sn.className='step-n'+(i===1?' act':'');
+  });
+  // Limpiar foto del odómetro (campo archivo + vista previa)
+  const fi = document.getElementById('foto-odometro');
+  const fp = document.getElementById('foto-preview');
+  const ft = document.getElementById('foto-txt');
+  if(fi) fi.value='';
+  if(fp){ fp.src=''; fp.style.display='none'; }
+  if(ft) ft.textContent='Toca para subir foto del odómetro';
+  // Ocultar warning de odómetro
+  const ow = document.getElementById('odo-warn');
+  if(ow) ow.style.display='none';
+}
+
+// ════════════ MODAL ESTACIÓN ════════════
+function abrirModalEst(id){
+  editingEst = id;
+  const e = ESTACIONES[id];
+  document.getElementById('modal-est-title').textContent = 'Editar Estación — '+e.nombre;
+  document.getElementById('est-num').value     = e.num;
+  document.getElementById('est-nombre').value  = e.nombre;
+  document.getElementById('est-diesel').value  = e.diesel || '';
+  document.getElementById('est-magna').value   = e.magna  || '';
+  document.getElementById('est-premium').value = e.premium|| '';
+  document.getElementById('est-obs').value     = e.obs    || '';
+  document.getElementById('modal-est').classList.add('open');
+}
+
+async function guardarEst(){
+  if(!editingEst) return;
+  const e = ESTACIONES[editingEst];
+  e.num     = document.getElementById('est-num').value;
+  e.nombre  = document.getElementById('est-nombre').value;
+  e.diesel  = parseFloat(document.getElementById('est-diesel').value) || null;
+  e.magna   = parseFloat(document.getElementById('est-magna').value)  || null;
+  e.premium = parseFloat(document.getElementById('est-premium').value)|| null;
+  e.obs     = document.getElementById('est-obs').value;
+
+  const error = await guardarEstSupa(editingEst, e);
+  if(error){ alert('⚠️ Error al guardar en base de datos: '+error.message); return; }
+
+  renderEstaciones();
+  cerrarModal('modal-est');
+  alert('✅ Estación actualizada correctamente.');
+}
+
+function renderEstaciones(){
+  [1,2,3].forEach(id=>{
+    const e = ESTACIONES[id];
+    const card = document.getElementById('est-card-'+id);
+    if(!card) return;
+    card.querySelector('.est-num').textContent    = 'Estación '+e.num;
+    card.querySelector('.est-nombre').textContent = e.nombre;
+    card.querySelector('.est-obs').textContent    = e.obs || 'Sin observaciones registradas.';
+    const preciosDiv = card.querySelector('.est-precios');
+    let html = '';
+    if(e.diesel)  html += `<div class="est-precio"><div class="est-precio-tipo">Diesel</div><div class="est-precio-val">$${e.diesel.toFixed(2)}</div></div>`;
+    if(e.magna)   html += `<div class="est-precio"><div class="est-precio-tipo">Magna Sin</div><div class="est-precio-val">$${e.magna.toFixed(2)}</div></div>`;
+    if(e.premium) html += `<div class="est-precio"><div class="est-precio-tipo">Premium</div><div class="est-precio-val">$${e.premium.toFixed(2)}</div></div>`;
+    preciosDiv.innerHTML = html;
+  });
+}
+
+// ════════════ MODAL CUENTA ════════════
+function abrirModalCuenta(){
+  document.getElementById('nc-email').value='';
+  document.getElementById('nc-pass').value='';
+  document.getElementById('nc-nombre').value='';
+  document.getElementById('modal-cuenta').classList.add('open');
+}
+
+async function crearCuenta(){
+  const email  = document.getElementById('nc-email').value.trim();
+  const pass   = document.getElementById('nc-pass').value;
+  const role   = document.getElementById('nc-role').value;
+  const nombre = document.getElementById('nc-nombre').value.trim();
+  if(!email || !pass){ alert('⚠️ Correo y contraseña son obligatorios.'); return; }
+  if(pass.length < 6){ alert('⚠️ Mínimo 6 caracteres en la contraseña.'); return; }
+
+  const { data: sd, error: se } = await supa.auth.signUp({
+    email, password: pass,
+    options: { data: { rol: role, nombre: nombre || email } }
+  });
+  if(se){ alert('Error: '+se.message); return; }
+  if(sd?.user){
+    await supa.from('perfiles').upsert({
+      id: sd.user.id, email, nombre: nombre||email, rol: role, activo: true
+    });
+  }
+  agregarFilaCuenta(email, role);
+  cerrarModal('modal-cuenta');
+  alert('✅ Cuenta creada: '+email+'\nPerfil: '+(role==='supervisor'?'Supervisor':'Dirección'));
+}
+
+function agregarFilaCuenta(email, role){
+  const lista = document.getElementById('lista-cuentas');
+  const div = document.createElement('div');
+  div.className = 'cuenta-row';
+  div.id = 'cuenta-'+btoa(email);
+  div.innerHTML = `
+    <div class="cuenta-info">
+      <div class="cuenta-email">${email}</div>
+      <div class="cuenta-role">${role==='supervisor'?'Supervisor':'Dirección'}</div>
+    </div>
+    <div class="cuenta-actions">
+      <button class="btn-icon" onclick="alert('Editar cuenta')">✏️</button>
+      <button class="btn-icon del" onclick="confirmarEliminar('${email}')">🗑️</button>
+    </div>`;
+  lista.appendChild(div);
+}
+
+async function confirmarEliminar(email){
+  if(!confirm('¿Desactivar la cuenta '+email+'?')) return;
+  const { error } = await supa.from('perfiles').update({activo:false}).eq('email',email);
+  if(error){ alert('Error: '+error.message); return; }
+  const el = document.getElementById('cuenta-'+btoa(email));
+  if(el) el.remove();
+  alert('✅ Cuenta desactivada: '+email);
+}
+
+function cerrarModal(id){
+  document.getElementById(id).classList.remove('open');
+}
+
+// ════════════ HISTORIAL POR UNIDAD ════════════
+async function cargarUnidad(val){
+  const panel = document.getElementById('hu-panel');
+  const empty = document.getElementById('hu-empty');
+  if(!val){ panel.style.display='none'; empty.style.display='block'; return; }
+
+  const p = val.split('|'); // NO.ECO|PLACAS|COMB
+  panel.style.display = 'block';
+  empty.style.display = 'none';
+
+  // Ficha básica
+  document.getElementById('hu-nombre').textContent      = p[0]+' | '+p[1];
+  document.getElementById('hu-placas-comb').textContent = 'Combustible: '+p[2];
+
+  // Calcular rango de fechas según el periodo seleccionado
+  const periodo = document.getElementById('hu-periodo')?.value || '30';
+  let desde = null;
+  if(periodo !== '0'){
+    const d = new Date();
+    d.setDate(d.getDate() - parseInt(periodo));
+    desde = d.toISOString().split('T')[0];
+  }
+
+  // Buscar id de la unidad en Supabase
+  const { data: uRow } = await supa.from('unidades')
+    .select('id').eq('numero_eco', p[0]).single();
+  if(!uRow){
+    document.getElementById('hu-tbody').innerHTML =
+      '<tr><td colspan="9" style="text-align:center;padding:28px;color:var(--text-sub)">No se encontró la unidad.</td></tr>';
+    return;
+  }
+
+  // Consulta real a Supabase con el periodo correcto
+  let query = supa.from('autorizaciones')
+    .select('folio, fecha, hora, hora_ini, hora_fin, operador, supervisor, odometro_ini, estaciones(nombre), unidades(combustible)')
+    .eq('unidad_id', uRow.id)
+    .order('created_at', { ascending: false });
+
+  if(desde) query = query.gte('fecha', desde);
+
+  const { data: regs, error } = await query;
+
+  if(error){
+    console.error('Error cargando unidad:', error);
+    return;
+  }
+
+  const lista = regs || [];
+
+  // Estadísticas
+  document.getElementById('hu-total-aut').textContent = lista.length;
+
+  const estCount = {};
+  lista.forEach(r=>{ const e = r.estaciones?.nombre||'—'; estCount[e]=(estCount[e]||0)+1; });
+  const topEst = Object.entries(estCount).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('hu-est-mas').textContent = topEst ? topEst[0] : '—';
+
+  const sups = new Set(lista.map(r=>r.supervisor));
+  const ops  = new Set(lista.map(r=>r.operador));
+  document.getElementById('hu-sup-count').textContent = sups.size;
+  document.getElementById('hu-op-count').textContent  = ops.size;
+
+  // Tabla completa
+  const tbody = document.getElementById('hu-tbody');
+  if(!lista.length){
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:28px;color:var(--text-sub)">Sin registros en el periodo seleccionado.</td></tr>';
+  } else {
+    tbody.innerHTML = lista.map(r=>{
+      const horario = (r.hora_ini && r.hora_fin) ? r.hora_ini+' — '+r.hora_fin : '—';
+      return `<tr>
+        <td>${r.folio}</td>
+        <td>${r.fecha}</td>
+        <td>${(r.hora||'').slice(0,5)||'—'}</td>
+        <td>${r.estaciones?.nombre||'—'}</td>
+        <td>${r.unidades?.combustible||'—'}</td>
+        <td>${r.operador||'—'}</td>
+        <td>${r.supervisor||'—'}</td>
+        <td>${(r.odometro_ini||0).toLocaleString('es-MX')} km</td>
+        <td><span class="bdg bdg-ok">✓ Activa</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Alertas
+  const alertas = document.getElementById('hu-alertas-body');
+  if(alertas) alertas.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-sub);font-size:13px">Sin alertas en el periodo seleccionado.</div>';
+}
+
+// ════════════ FOTO ODÓMETRO ════════════
+function previewFoto(input){
+  const file = input.files[0];
+  if(!file) return;
+  const txt  = document.getElementById('foto-txt');
+  const prev = document.getElementById('foto-preview');
+  if(txt)  txt.textContent  = '✅ ' + file.name;
+  if(prev){
+    prev.src = URL.createObjectURL(file);
+    prev.style.display = 'block';
+  }
+}
+
+// ════════════ VALIDACIÓN ODÓMETRO ════════════
+let ultimoOdoUnidad = 0;
+
+async function calcAsig(){
+  const val = document.getElementById('a-unidad').value;
+  if(!val) return;
+  const parts = val.split('|');
+  // Nuevo formato: ID|ECO|PLACAS|COMB — usar ID directo
+  let unidId = null;
+  if(parts.length >= 4 && !isNaN(parseInt(parts[0]))){
+    unidId = parseInt(parts[0]);
+  } else {
+    // Fallback: buscar por número económico
+    const { data: uRow } = await supa.from('unidades').select('id').eq('numero_eco', parts[0].trim()).single();
+    unidId = uRow?.id || null;
+  }
+  if(!unidId) return;
+  const { data: lastAut } = await supa.from('autorizaciones')
+    .select('odometro_ini').eq('unidad_id', unidId)
+    .order('created_at',{ascending:false}).limit(1);
+  ultimoOdoUnidad = lastAut?.[0]?.odometro_ini || 0;
+  // Ocultar warning al cambiar de unidad
+  const warn = document.getElementById('odo-warn');
+  if(warn) warn.style.display='none';
+}
+
+function toggleOdoNA(cb){
+  const odoInput = document.getElementById('a-odo');
+  const odoWarn  = document.getElementById('odo-warn');
+  if(cb.checked){
+    odoInput.value       = '';
+    odoInput.disabled    = true;
+    odoInput.placeholder = 'No disponible — en reparación';
+    odoInput.style.opacity = '0.5';
+    if(odoWarn) odoWarn.style.display = 'none';
+  } else {
+    odoInput.disabled    = false;
+    odoInput.placeholder = 'Ej. 87340';
+    odoInput.style.opacity = '1';
+  }
+}
+
+function validarOdo(input){
+  const val  = parseInt(input.value)||0;
+  const warn = document.getElementById('odo-warn');
+  if(!warn) return;
+  const esInvalido = ultimoOdoUnidad > 0 && val <= ultimoOdoUnidad && val > 0;
+  warn.style.display = esInvalido ? 'block' : 'none';
+  if(esInvalido){
+    warn.textContent = '⚠️ El odómetro es igual o menor al último registrado ('+ultimoOdoUnidad.toLocaleString('es-MX')+' km). Verifica la lectura actual antes de continuar.';
+  }
+}
+
+// ════════════ SIMULADOR ════════════
+function selEstSim(el){
+  el.closest('div').querySelectorAll('.est-opt').forEach(o=>o.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function generarSimulacion(){
+  const sup    = document.getElementById('sim-sup').value.trim();
+  const unidad = document.getElementById('sim-unidad').value;
+  const op     = document.getElementById('sim-op').value.trim();
+  const odo    = document.getElementById('sim-odo').value;
+  const estEl  = document.querySelector('#page-simulador .est-opt.active');
+
+  if(!sup||!unidad||!op||!odo){ alert('Completa todos los campos para la simulación.'); return; }
+
+  const now  = new Date();
+  const hh   = String(now.getHours()).padStart(2,'0');
+  const mm   = String(now.getMinutes()).padStart(2,'0');
+  const hora = hh+':'+mm;
+  const meses= ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const fv   = now.toISOString().split('T')[0].split('-');
+  const chars= 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const rand = Array.from({length:6},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+  const folio= 'SIM-'+fv[0]+'-'+rand;
+  const partes = unidad.split(' | ');
+  const est  = estEl ? estEl.dataset.est : 'RESCAÑO';
+
+  document.getElementById('sim-folio').textContent    = folio;
+  document.getElementById('sim-fecha-hora').textContent = fv[2]+' '+meses[parseInt(fv[1])-1]+' '+fv[0]+' · '+hora;
+  document.getElementById('sim-strip').innerHTML      = '<span class="unit-big">'+partes[0]+' <span style="font-size:15px;font-weight:700;color:var(--verde)">'+partes[1]+'</span></span><span class="op-label">Operador / Chofer</span><span class="op-big">'+op+'</span>';
+  document.getElementById('sim-sup-show').textContent = sup;
+  document.getElementById('sim-est-show').textContent = est;
+  document.getElementById('sim-comb-show').textContent= 'DIESEL';
+  document.getElementById('sim-odo-show').textContent = Number(odo).toLocaleString('es-MX')+' km';
+  const hIni = document.getElementById('sim-hora-ini')?.value || '05:30';
+  const hFin = document.getElementById('sim-hora-fin')?.value || '08:00';
+  const horarioEl = document.getElementById('sim-horario');
+  if(horarioEl) horarioEl.textContent = hIni + ' — ' + hFin + ' hrs';
+  document.getElementById('sim-resultado').style.display = 'block';
+}
+
+function resetSim(){
+  ['sim-sup','sim-unidad','sim-op','sim-odo'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('sim-resultado').style.display = 'none';
+}
+
+// ════════════ MI PERFIL (SUPERVISOR) ════════════
+async function cargarPerfil(){
+  const { data: { session } } = await supa.auth.getSession();
+  if(!session) return;
+  document.getElementById('sup-email-show').value = session.user.email || '';
+
+  const { data: perfil } = await supa.from('perfiles')
+    .select('nombre, rol').eq('id', session.user.id).single();
+  if(perfil){
+    document.getElementById('sup-nombre').value  = perfil.nombre || '';
+    document.getElementById('sup-puesto').value  = perfil.puesto || '';
+    document.getElementById('sup-tel').value     = perfil.telefono || '';
+  }
+}
+
+async function guardarPerfil(){
+  const { data: { session } } = await supa.auth.getSession();
+  if(!session){ alert('Sesión no activa.'); return; }
+
+  const nombre  = document.getElementById('sup-nombre').value.trim();
+  const puesto  = document.getElementById('sup-puesto').value.trim();
+  const telefono= document.getElementById('sup-tel').value.trim();
+
+  // Validar teléfono (solo números, espacios, guiones, paréntesis)
+  if(telefono && !/^[\d\s\-()+ ]{7,20}$/.test(telefono)){
+    alert('⚠️ El teléfono debe contener solo números. Ej: 55 1234 5678');
+    return;
+  }
+
+  const { error } = await supa.from('perfiles').update({ nombre, puesto, telefono })
+    .eq('id', session.user.id);
+
+  if(error){ alert('Error al guardar: '+error.message); return; }
+  alert('✅ Perfil actualizado correctamente.');
+}
+
+// ════════════ UNIDADES ════════════
+let unidadesCache = []; // caché (memoria temporal) de unidades cargadas
+
+async function cargarUnidadesTabla(perfil){
+  if(!unidadesCache.length){
+    const { data } = await supa.from('unidades').select('*').order('numero_eco');
+    unidadesCache = data || [];
+  }
+  renderUnidades(perfil, unidadesCache);
+}
+
+function renderUnidades(perfil, lista){
+  const tbodyId = 'tbody-unidades-'+perfil;
+  const tbody = document.getElementById(tbodyId);
+  if(!tbody) return;
+
+  if(!lista.length){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:28px;color:var(--text-sub)">Sin unidades registradas.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = lista.map(u => {
+    const esSup = perfil === 'sup';
+    const acciones = esSup
+      ? `<button class="btn-ghost" style="padding:5px 10px;font-size:11px" onclick="abrirEditUnidad(${u.id},'${u.numero_eco}','${u.placas}')">✏️ Editar</button>`
+      : `<div style="display:flex;gap:6px">
+           <button class="btn-ghost" style="padding:5px 10px;font-size:11px" onclick="abrirEditUnidad(${u.id},'${u.numero_eco}','${u.placas}')">✏️ Editar</button>
+           <button class="btn-danger" style="padding:5px 10px;font-size:11px" onclick="eliminarUnidad(${u.id},'${u.numero_eco}')">🗑️</button>
+         </div>`;
+    return `<tr>
+      <td class="tu">${u.numero_eco}</td>
+      <td>${u.placas}</td>
+      <td>${u.combustible}</td>
+      <td id="uc-${u.id}">—</td>
+      <td id="uo-${u.id}">—</td>
+      <td>${acciones}</td>
+    </tr>`;
+  }).join('');
+
+  // Cargar último chofer y odómetro por unidad desde autorizaciones
+  lista.forEach(async u => {
+    const { data } = await supa.from('autorizaciones')
+      .select('operador, odometro_ini')
+      .eq('unidad_id', u.id)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if(data && data[0]){
+      const elC = document.getElementById('uc-'+u.id);
+      const elO = document.getElementById('uo-'+u.id);
+      if(elC) elC.textContent = data[0].operador || '—';
+      if(elO) elO.textContent = (data[0].odometro_ini||0).toLocaleString('es-MX')+' km';
+    }
+  });
+}
+
+async function cargarFlotaSup(){
+  const { data, error } = await supa.from('unidades')
+    .select('id, numero_eco, placas, combustible')
+    .eq('activa', true)
+    .order('numero_eco');
+  if(error || !data) return;
+
+  const tbody = document.getElementById('tbody-flota-sup');
+  if(!tbody) return;
+
+  tbody.innerHTML = data.map(u => `<tr>
+    <td class="tu">${u.numero_eco}</td>
+    <td>${u.placas}</td>
+    <td>${u.combustible}</td>
+    <td id="fsc-${u.id}">—</td>
+    <td id="fso-${u.id}">—</td>
+    <td id="fst-${u.id}">—</td>
+  </tr>`).join('');
+
+  // Cargar stats por unidad (paralelo, cada unidad tiene su propia consulta)
+  data.forEach(async u => {
+    const { data: aut } = await supa.from('autorizaciones')
+      .select('operador, odometro_ini')
+      .eq('unidad_id', u.id)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    const { count } = await supa.from('autorizaciones')
+      .select('*', { count: 'exact', head: true })
+      .eq('unidad_id', u.id);
+    if(aut?.[0]){
+      const ec = document.getElementById('fsc-'+u.id);
+      const eo = document.getElementById('fso-'+u.id);
+      const et = document.getElementById('fst-'+u.id);
+      if(ec) ec.textContent = aut[0].operador || '—';
+      if(eo) eo.textContent = (aut[0].odometro_ini||0).toLocaleString('es-MX')+' km';
+      if(et) et.textContent = count || 0;
+    }
+  });
+}
+
+let flotaSupCache = [];
+function filtrarFlotaSup(){
+  const q = document.getElementById('buscar-flota-sup')?.value?.toLowerCase() || '';
+  document.querySelectorAll('#tbody-flota-sup tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function filtrarUnidades(perfil){
+  const q = document.getElementById('buscar-unidad-'+perfil).value.toLowerCase();
+  const filtradas = unidadesCache.filter(u =>
+    u.numero_eco.toLowerCase().includes(q) || u.placas.toLowerCase().includes(q)
+  );
+  renderUnidades(perfil, filtradas);
+}
+
+// Modal editar unidad
+let editingUnidadId = null;
+
+function abrirEditUnidad(id, eco, placas){
+  editingUnidadId = id;
+  document.getElementById('eu-eco').textContent   = eco;
+  document.getElementById('eu-placas').value      = placas;
+  document.getElementById('eu-chofer').value      = '';
+  document.getElementById('modal-unidad').classList.add('open');
+}
+
+async function guardarUnidad(){
+  if(!editingUnidadId) return;
+  const placas = document.getElementById('eu-placas').value.trim();
+  if(!placas){ alert('Las placas son obligatorias.'); return; }
+
+  const { error } = await supa.from('unidades')
+    .update({ placas })
+    .eq('id', editingUnidadId);
+
+  if(error){ alert('Error: '+error.message); return; }
+
+  // Actualizar caché (memoria temporal) local
+  const idx = unidadesCache.findIndex(u=>u.id===editingUnidadId);
+  if(idx>=0) unidadesCache[idx].placas = placas;
+
+  cerrarModal('modal-unidad');
+  // Re-render ambas tablas si existen
+  renderUnidades('sup', unidadesCache);
+  renderUnidades('dir', unidadesCache);
+  alert('✅ Unidad actualizada.');
+}
+
+async function eliminarUnidad(id, eco){
+  const pass = prompt('Ingresa tu contraseña para confirmar la eliminación de '+eco+':');
+  if(!pass) return;
+
+  // Verificar contraseña re-autenticando (verificando identidad de nuevo)
+  const { data: { session } } = await supa.auth.getSession();
+  const { error: authErr } = await supa.auth.signInWithPassword({
+    email: session.user.email, password: pass
+  });
+
+  if(authErr){ alert('⚠️ Contraseña incorrecta.'); return; }
+  if(!confirm('¿Eliminar definitivamente '+eco+'? Esta acción no se puede deshacer.')) return;
+
+  const { error } = await supa.from('unidades').delete().eq('id', id);
+  if(error){ alert('Error: '+error.message); return; }
+
+  unidadesCache = unidadesCache.filter(u=>u.id!==id);
+  renderUnidades('dir', unidadesCache);
+  alert('✅ Unidad '+eco+' eliminada.');
+}
+
+// ════════════ ELIMINAR AUTORIZACIÓN (DIRECCIÓN) ════════════
+async function eliminarAutorizacion(id, folio){
+  if(!id){ alert('No se puede eliminar: registro sin identificador.'); return; }
+
+  const pass = prompt('Para eliminar la autorización '+folio+' ingresa tu contraseña de dirección:');
+  if(!pass) return;
+
+  // Re-autenticar para confirmar identidad
+  const { data: { session } } = await supa.auth.getSession();
+  const { error: authErr } = await supa.auth.signInWithPassword({
+    email: session.user.email, password: pass
+  });
+  if(authErr){ alert('⚠️ Contraseña incorrecta.'); return; }
+
+  if(!confirm('¿Eliminar la autorización '+folio+'?\n\nEsta acción NO se puede deshacer.')) return;
+
+  const { error } = await supa.from('autorizaciones').delete().eq('id', id);
+  if(error){ alert('Error al eliminar: '+error.message); return; }
+
+  alert('✅ Autorización '+folio+' eliminada correctamente.');
+  // Recargar historial
+  cargarHistorialGeneral();
+}
+
+// ════════════ DETALLE AUTORIZACIÓN ════════════
+function verDetalleIdx(idx){
+  const r = historialData[idx];
+  if(!r){ alert('No se encontraron los datos de esta autorización.'); return; }
+  verDetalleAut(r);
+}
+
+function verDetalleAut(r){
+  try {
+    const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const fv = (r.fecha||'').split('-');
+    const fechaStr = fv.length===3 ? fv[2]+' de '+meses[parseInt(fv[1])-1]+' de '+fv[0] : r.fecha;
+    const horario = (r.hora_ini&&r.hora_fin) ? r.hora_ini+' \u2014 '+r.hora_fin+' hrs' : '\u2014';
+    const eco    = r.unidades?.numero_eco || r.unidad || '\u2014';
+    const placas = r.unidades?.placas     || r.placas || '\u2014';
+    const comb   = r.unidades?.combustible|| r.comb   || '\u2014';
+    const est    = r.estaciones?.nombre   || r.est    || '\u2014';
+    const odo    = (r.odometro_ini||0).toLocaleString('es-MX');
+    const horaEm = (r.hora||'').slice(0,5)||'\u2014';
+
+    var html = '<div class="aut-doc">';
+    html += '<div class="aut-doc-hd">';
+    html += '<div class="aut-doc-logo"><span style="color:white;font-family:Nunito,sans-serif;font-weight:900;font-size:13px">BIOAMBIENTALISTIK</span></div>';
+    html += '<div class="aut-doc-right">';
+    html += '<div class="aut-doc-name">Autorizaci\u00f3n de Carga de Combustible</div>';
+    html += '<div class="aut-doc-folio-big">'+r.folio+'</div>';
+    html += '<div class="aut-doc-folio-sub">'+fechaStr+'</div>';
+    html += '</div></div>';
+    html += '<div class="aut-doc-body">';
+    html += '<div class="aut-strip"><div class="aut-strip-ico">\ud83d\ude9b</div>';
+    html += '<div class="aut-strip-txt">';
+    html += '<span class="unit-big">'+eco+' <span style="font-size:15px;font-weight:700;color:var(--verde)">'+placas+'</span></span>';
+    html += '<span class="op-label">Operador / Chofer</span>';
+    html += '<span class="op-big">'+(r.operador||'\u2014')+'</span>';
+    html += '</div></div>';
+    html += '<div class="aut-grid">';
+    html += '<div class="aut-field"><label>Supervisor que autoriza</label><span>'+(r.supervisor||'\u2014')+'</span></div>';
+    html += '<div class="aut-field"><label>Estaci\u00f3n de carga</label><span>'+est+'</span></div>';
+    html += '<div class="aut-field"><label>Tipo de combustible</label><span>'+comb+'</span></div>';
+    html += '<div class="aut-field"><label>Od\u00f3metro inicial</label><span>'+odo+' km</span></div>';
+    html += '<div class="aut-field"><label>Hora de emisi\u00f3n</label><span>'+horaEm+'</span></div>';
+    html += '<div class="aut-field"><label>Fecha</label><span>'+fechaStr+'</span></div>';
+    html += '<div class="aut-field" style="grid-column:1/-1;background:var(--verde-tenue);border-radius:var(--r-sm);padding:10px 12px">';
+    html += '<label>\u23f0 Horario v\u00e1lido de carga</label>';
+    html += '<span style="font-size:15px">'+horario+'</span>';
+    html += '<div style="font-size:10px;color:var(--text-sub);margin-top:3px;font-style:italic">La aprobaci\u00f3n es \u00fanicamente v\u00e1lida en el horario establecido</div>';
+    html += '</div></div></div>';
+    html += '<div class="aut-doc-ft">BioAmbientalistik S.A. de C.V. \u00b7 Documento generado electr\u00f3nicamente.</div>';
+    html += '</div>';
+
+    var container = document.getElementById('detalle-aut-content');
+    if(container) container.innerHTML = html;
+
+    showPage('detalle-aut');
+    document.querySelectorAll('#sb-dir .sb-item').forEach(function(i){ i.classList.remove('active'); });
+  } catch(err){
+    alert('Error al mostrar detalle: '+err.message);
+    console.error('verDetalleAut error:', err);
+  }
+}
+
+// ════════════ DASHBOARD CHARTS ════════════
+let dashCharts = {};
+let dashPeriodo = 'hoy';
+
+const VERDE     = '#2d5a27';
+const VERDE2    = '#4d8f3e';
+const VERDE3    = '#8ab87a';
+const VERDEL    = 'rgba(45,90,39,0.15)';
+const GRIS_C    = '#d8e4d3';
+
+function chartTextColor(){ return getComputedStyle(document.documentElement).getPropertyValue('--text-sub').trim() || '#6b7a68'; }
+function chartGridColor(){ return getComputedStyle(document.documentElement).getPropertyValue('--gris-borde').trim() || '#d8e4d3'; }
+
+function baseOpts(horizontal){
+  const tc = '#6b7a68';
+  const gc = '#e8f2e6';
+  const axis = {
+    x: { grid:{ color: gc }, ticks:{ color: tc, font:{ size:11 } } },
+    y: { grid:{ color: gc }, ticks:{ color: tc, font:{ size:11 }, stepSize:1 } }
+  };
+  if(horizontal){ const tmp=axis.x; axis.x=axis.y; axis.y=tmp; }
+  return { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales: axis };
+}
+
+function destroyCharts(){
+  Object.values(dashCharts).forEach(ch=>{ if(ch) ch.destroy(); });
+  dashCharts = {};
+}
+
+async function setDashPeriodo(btn){
+  document.querySelectorAll('.dash-filt').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  dashPeriodo = btn.dataset.p;
+  const subs = { hoy:'hoy', semana:'esta semana', mes:'este mes', anio:'este año' };
+  const el = document.getElementById('dash-aut-sub');
+  if(el) el.textContent = subs[dashPeriodo] || dashPeriodo;
+  await cargarDashboardCharts();
+}
+
+function getFechaRango(periodo){
+  const hoy = new Date();
+  const pad  = n => String(n).padStart(2,'0');
+  const fmt  = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  if(periodo === 'hoy') return { desde: fmt(hoy), hasta: fmt(hoy) };
+  if(periodo === 'semana'){
+    const lun = new Date(hoy); lun.setDate(hoy.getDate()-hoy.getDay()+1);
+    return { desde: fmt(lun), hasta: fmt(hoy) };
+  }
+  if(periodo === 'mes'){
+    const ini = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    return { desde: fmt(ini), hasta: fmt(hoy) };
+  }
+  if(periodo === 'anio'){
+    const ini = new Date(hoy.getFullYear(), 0, 1);
+    return { desde: fmt(ini), hasta: fmt(hoy) };
+  }
+  return { desde: fmt(hoy), hasta: fmt(hoy) };
+}
+
+async function cargarDashboardCharts(){
+  const { desde, hasta } = getFechaRango(dashPeriodo);
+
+  // Traer autorizaciones del periodo con joins (consultas combinadas — trae datos de varias tablas a la vez)
+  const { data, error } = await supa.from('autorizaciones')
+    .select('fecha, hora, unidad_id, estacion_id, supervisor, unidades(numero_eco), estaciones(nombre)')
+    .gte('fecha', desde)
+    .lte('fecha', hasta)
+    .order('fecha', { ascending: true });
+
+  if(error || !data){
+    console.error('Error cargando dashboard:', error);
+    return;
+  }
+
+  // Actualizar stats
+  const el1 = document.getElementById('dash-aut-hoy');
+  const el2 = document.getElementById('dash-unid-aut');
+  if(el1) el1.textContent = data.length;
+  const uniqUnid = new Set(data.map(r=>r.unidad_id)).size;
+  if(el2) el2.textContent = uniqUnid;
+
+  // Agrupar datos
+  const porDia    = {};
+  const porEst    = {};
+  const porHora   = {};
+  const porUnid   = {};
+  const porSup    = {};
+
+  data.forEach(r => {
+    // Por día
+    const dia = r.fecha || '—';
+    porDia[dia] = (porDia[dia]||0) + 1;
+
+    // Por estación
+    const est = r.estaciones?.nombre || 'Sin estación';
+    porEst[est] = (porEst[est]||0) + 1;
+
+    // Por hora (HH:00)
+    const h = r.hora ? r.hora.slice(0,2)+'h' : '—';
+    porHora[h] = (porHora[h]||0) + 1;
+
+    // Por unidad (top 8)
+    const eco = r.unidades?.numero_eco || '—';
+    porUnid[eco] = (porUnid[eco]||0) + 1;
+
+    // Por supervisor
+    const sup = r.supervisor || '—';
+    porSup[sup] = (porSup[sup]||0) + 1;
+  });
+
+  destroyCharts();
+
+  // ── Gráfica 1: Por día (barras) ──
+  const diasLabels = Object.keys(porDia);
+  const diasVals   = Object.values(porDia);
+  const ctxDias = document.getElementById('chart-dias');
+  if(ctxDias) dashCharts.dias = new Chart(ctxDias, {
+    type: 'bar',
+    data: {
+      labels: diasLabels,
+      datasets: [{ data: diasVals, backgroundColor: VERDE, borderRadius: 4 }]
+    },
+    options: { ...baseOpts(false), scales: {
+      x: { grid:{ color:'#e8f2e6' }, ticks:{ color:'#6b7a68', font:{size:10}, maxRotation:45 } },
+      y: { grid:{ color:'#e8f2e6' }, ticks:{ color:'#6b7a68', font:{size:11}, stepSize:1 } }
+    }}
+  });
+
+  // ── Gráfica 2: Por estación (dona) ──
+  const estLabels = Object.keys(porEst);
+  const estVals   = Object.values(porEst);
+  const estColors = [VERDE, VERDE2, VERDE3, '#b8d4a8'];
+  const ctxEst = document.getElementById('chart-est');
+  if(ctxEst) dashCharts.est = new Chart(ctxEst, {
+    type: 'doughnut',
+    data: {
+      labels: estLabels,
+      datasets: [{ data: estVals, backgroundColor: estColors.slice(0,estLabels.length), borderWidth:2, borderColor:'#fff' }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, cutout:'60%' }
+  });
+  // Leyenda manual
+  const legEl = document.getElementById('legend-est');
+  if(legEl){
+    legEl.innerHTML = estLabels.map((l,i)=>
+      `<span style="display:flex;align-items:center;gap:4px">
+        <span style="width:10px;height:10px;border-radius:2px;background:${estColors[i]};display:inline-block"></span>${l} (${estVals[i]})
+      </span>`
+    ).join('');
+  }
+
+  // ── Gráfica 3: Por hora ──
+  const horas = ['05h','06h','07h','08h','09h','10h','11h','12h','13h','14h'];
+  const horaVals = horas.map(h => porHora[h]||0);
+  const ctxHora = document.getElementById('chart-hora');
+  if(ctxHora) dashCharts.hora = new Chart(ctxHora, {
+    type: 'bar',
+    data: { labels: horas, datasets: [{ data: horaVals, backgroundColor: VERDE2, borderRadius: 4 }] },
+    options: { ...baseOpts(false) }
+  });
+
+  // ── Gráfica 4: Top unidades ──
+  const topUnid = Object.entries(porUnid).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const ctxUnid = document.getElementById('chart-unid');
+  if(ctxUnid) dashCharts.unid = new Chart(ctxUnid, {
+    type: 'bar',
+    data: {
+      labels: topUnid.map(u=>u[0]),
+      datasets: [{ data: topUnid.map(u=>u[1]), backgroundColor: VERDE, borderRadius: 4 }]
+    },
+    options: { ...baseOpts(true), indexAxis:'y' }
+  });
+
+  // ── Gráfica 5: Top supervisores ──
+  const topSup = Object.entries(porSup).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const ctxSup = document.getElementById('chart-sup');
+  if(ctxSup) dashCharts.sup = new Chart(ctxSup, {
+    type: 'bar',
+    data: {
+      labels: topSup.map(s=>s[0]),
+      datasets: [{ data: topSup.map(s=>s[1]), backgroundColor: VERDE2, borderRadius: 4 }]
+    },
+    options: { ...baseOpts(true), indexAxis:'y' }
+  });
+}
+
+// ════════════ UPDATES POR ROL ════════════
+function configurarUpdates(rol){
+  const dirView = document.getElementById('updates-dir-view');
+  const supView = document.getElementById('updates-sup-view');
+  const dirNote = document.getElementById('updates-dir-note');
+  if(rol === 'direccion'){
+    if(dirView) dirView.style.display = 'block';
+    if(supView) supView.style.display = 'none';
+    if(dirNote) dirNote.style.display = 'block';
+  } else {
+    if(dirView) dirView.style.display = 'none';
+    if(supView) supView.style.display = 'block';
+    if(dirNote) dirNote.style.display = 'none';
+  }
+}
+
+// ════════════ REPORT TABS ════════════
+function setRptTab(tab){
+  ['gral','unidad','estacion'].forEach(t=>{
+    document.getElementById('rtab-'+t).classList.toggle('active', t===tab);
+    document.getElementById('rpt-'+t).style.display = t===tab ? 'block' : 'none';
+  });
+}
+
+// ════════════ STATION SELECTOR ════════════
+function selEst(el){
+  document.querySelectorAll('.est-opt').forEach(o=>o.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ════════════ HISTORIAL FILTER ════════════
+function filtrarHistorial(){
+  const folio   = (document.getElementById('f-folio').value || '').toUpperCase().trim();
+  const unidad  = document.getElementById('f-unidad').value;
+  const est     = document.getElementById('f-est').value;
+  const rows    = document.querySelectorAll('#tbody-historial tr');
+  let visible = 0;
+  rows.forEach(row=>{
+    if(row.querySelector('td[colspan]')){ row.style.display='none'; return; }
+    const text = row.textContent.toUpperCase();
+    const matchFolio  = !folio  || text.includes(folio);
+    const matchUnidad = !unidad || text.includes(unidad);
+    const matchEst    = !est    || text.includes(est.toUpperCase());
+    const show = matchFolio && matchUnidad && matchEst;
+    row.style.display = show ? '' : 'none';
+    if(show) visible++;
+  });
+  // Show empty state if nothing matches
+  const tbody = document.getElementById('tbody-historial');
+  if(visible === 0 && tbody){
+    const existing = tbody.querySelector('.empty-filter-row');
+    if(!existing){
+      const tr = document.createElement('tr');
+      tr.className = 'empty-filter-row';
+      tr.innerHTML = '<td colspan="12" style="text-align:center;padding:24px;color:var(--text-sub)">Sin resultados para el filtro aplicado.</td>';
+      tbody.appendChild(tr);
+    }
+  } else {
+    const existing = tbody?.querySelector('.empty-filter-row');
+    if(existing) existing.remove();
+  }
+}
+
+// ════════════ SUPABASE DATA LOADERS ════════════
+
+// Cargar estaciones desde Supabase y actualizar panel
+async function poblarSelectUnidades(){
+  // Cargar unidades reales desde Supabase para garantizar coincidencia exacta en IDs
+  const { data, error } = await supa.from('unidades')
+    .select('id, numero_eco, placas, combustible')
+    .eq('activa', true)
+    .order('numero_eco');
+  if(error || !data) return;
+
+  const sel = document.getElementById('a-unidad');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">— Selecciona la unidad —</option>';
+  data.forEach(u => {
+    const opt = document.createElement('option');
+    // Guardar el ID de Supabase directamente para evitar búsquedas posteriores
+    opt.value = u.id + '|' + u.numero_eco + '|' + u.placas + '|' + u.combustible;
+    opt.textContent = u.numero_eco + ' | ' + u.placas;
+    sel.appendChild(opt);
+  });
+}
+
+async function cargarEstacionesSupa(){
+  const { data, error } = await supa.from('estaciones').select('*').order('id');
+  if(error || !data) return;
+  data.forEach(e => {
+    const id = e.id;
+    ESTACIONES[id] = {
+      num: e.numero, nombre: e.nombre,
+      diesel: e.precio_diesel, magna: e.precio_magna, premium: e.precio_premium,
+      obs: e.observaciones || ''
+    };
+    // Actualizar lista de selección con null check
+    document.querySelectorAll('.est-opt').forEach(opt => {
+      try {
+        const nameEl = opt.querySelector('.est-opt-name');
+        if(nameEl && opt.dataset.est && opt.dataset.est.replace(/\s+/g,' ').trim() === e.nombre.replace(/\s+/g,' ').trim()){
+          nameEl.textContent = e.nombre;
+        }
+      } catch(err){ /* ignorar si elemento no existe */ }
+    });
+  });
+  renderEstaciones();
+}
+
+// Cargar autorizaciones del día actual desde Supabase
+async function cargarAutorizacionesDia(){
+  const hoy = new Date().toISOString().split('T')[0];
+  const { data, error } = await supa
+    .from('autorizaciones')
+    .select(`
+      id, folio, hora, fecha, operador, supervisor, odometro_ini, litros_autorizados, hora_ini, hora_fin,
+      unidades(numero_eco, placas, combustible),
+      estaciones(nombre)
+    `)
+    .eq('fecha', hoy)
+    .order('created_at', { ascending: false });
+
+  if(error || !data) return;
+
+  autorizacionesDia = data.map(r => ({
+    folio:      r.folio,
+    hora:       r.hora?.slice(0,5) || '—',
+    fecha:      r.fecha,
+    unidad:     r.unidades?.numero_eco || '—',
+    placas:     r.unidades?.placas || '—',
+    comb:       r.unidades?.combustible || '—',
+    est:        r.estaciones?.nombre || '—',
+    operador:   r.operador,
+    supervisor: r.supervisor,
+    odo:        (r.odometro_ini || 0).toLocaleString('es-MX'),
+    litros:     r.litros_autorizados || null,
+    hora_ini:   r.hora_ini || null,
+    hora_fin:   r.hora_fin || null
+  }));
+
+  actualizarTablaDia();
+}
+
+// Cargar historial general (dirección)
+async function cargarHistorialGeneral(){
+  const { data, error } = await supa
+    .from('autorizaciones')
+    .select(`
+      id, folio, hora, fecha, operador, supervisor, odometro_ini, litros_autorizados, hora_ini, hora_fin,
+      unidades(numero_eco, placas, combustible),
+      estaciones(nombre)
+    `)
+    .order('created_at', { ascending: false })
+    .limit(500);
+
+  if(error || !data) return;
+
+  const tbody = document.getElementById('tbody-historial');
+  if(!data.length){
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:32px;color:var(--text-sub)">Sin registros aún.</td></tr>';
+    return;
+  }
+
+  historialData = data; // guardar referencia global para acceso por índice
+  tbody.innerHTML = data.map((r, idx) => {
+    const horario = (r.hora_ini && r.hora_fin) ? r.hora_ini+' — '+r.hora_fin : '—';
+    return `<tr>
+      <td>${r.folio}</td>
+      <td>${r.fecha}</td>
+      <td>${r.hora?.slice(0,5)||'—'}</td>
+      <td class="tu">${r.unidades?.numero_eco||'—'}</td>
+      <td>${r.unidades?.placas||'—'}</td>
+      <td>${r.unidades?.combustible||'—'}</td>
+      <td>${r.estaciones?.nombre||'—'}</td>
+      <td>${horario}</td>
+      <td>${r.operador}</td>
+      <td>${r.supervisor}</td>
+      <td>${(r.odometro_ini||0).toLocaleString('es-MX')} km</td>
+      <td>
+        <div style="display:flex;gap:4px;align-items:center">
+          <button class="btn-ghost" style="padding:4px 10px;font-size:11px" onclick="verDetalleIdx(${idx})">Ver</button>
+          <button class="btn-danger" style="padding:4px 8px;font-size:11px" onclick="eliminarAutorizacion(${r.id||0},'${r.folio}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// Cargar stats para dashboard
+async function cargarDashboard(){
+  const hoy = new Date().toISOString().split('T')[0];
+
+  // Contar autorizaciones del día (SELECT COUNT = contar filas)
+  const { count: autHoy } = await supa
+    .from('autorizaciones')
+    .select('*', { count: 'exact', head: true })
+    .eq('fecha', hoy);
+
+  // Unidades únicas autorizadas hoy
+  const { data: unidHoy } = await supa
+    .from('autorizaciones')
+    .select('unidad_id')
+    .eq('fecha', hoy);
+  const unidsUnicas = new Set((unidHoy||[]).map(r=>r.unidad_id)).size;
+
+  // Actualizar tarjetas del dashboard
+  const elAut  = document.getElementById('dash-aut-hoy');
+  const elUnid = document.getElementById('dash-unid-aut');
+  if(elAut)  elAut.textContent  = autHoy || 0;
+  if(elUnid) elUnid.textContent = unidsUnicas || 0;
+
+  cargarAutorizacionesDia();
+}
+
+// Auto-verificar sesión al cargar la página (por si hay sesión activa previa)
+async function verificarSesion(){
+  const { data: { session } } = await supa.auth.getSession();
+  if(!session) return;
+
+  const { data: perfil } = await supa
+    .from('perfiles')
+    .select('rol, nombre, email')
+    .eq('id', session.user.id)
+    .single();
+
+  if(perfil){
+    curRole = perfil.rol;
+    iniciarApp(session.user.email, perfil.rol, perfil.nombre || session.user.email);
+  }
+}
+
+// Guardar cambios de estación en Supabase
+async function guardarEstSupa(id, datos){
+  const { error } = await supa.from('estaciones').update({
+    numero:          datos.num,
+    nombre:          datos.nombre,
+    precio_diesel:   datos.diesel,
+    precio_magna:    datos.magna,
+    precio_premium:  datos.premium,
+    observaciones:   datos.obs,
+    actualizado_en:  new Date().toISOString()
+  }).eq('id', id);
+  return error;
+}
+
+// Navegar a la página de inicio según el rol (autorización de carga)
+function irAInicio(){
+  if(curRole === 'supervisor'){
+    const el = document.querySelector('#sb-sup .sb-item');
+    if(el) navTo('aut','sb-sup',el);
+  } else if(curRole === 'direccion'){
+    const el = document.querySelector('#sb-dir .sb-item');
+    if(el) navTo('aut','sb-dir',el);
+  }
+  closeSB();
+}
+
+// ════════════ EXCEL CON SHEETJS ════════════
+async function descargarExcel(){
+  const btnEl = document.querySelector('[onclick="descargarExcel()"]');
+  if(btnEl){ btnEl.textContent='⏳ Generando...'; btnEl.disabled=true; }
+  try {
+    const fechaIni = document.getElementById('r-desde').value;
+    const fechaFin = document.getElementById('r-hasta').value;
+    if(!fechaIni||!fechaFin){ alert('⚠️ Selecciona el periodo.'); return; }
+
+    const { data, error } = await supa.from('autorizaciones')
+      .select('folio,fecha,hora,operador,supervisor,odometro_ini,litros_autorizados,hora_ini,hora_fin,unidades(numero_eco,placas,combustible),estaciones(nombre)')
+      .gte('fecha', fechaIni).lte('fecha', fechaFin).order('fecha',{ascending:true});
+    if(error||!data){ alert('Error: '+(error?.message||'sin datos')); return; }
+
+    const h1 = data.map(r=>({'Folio':r.folio,'Fecha':r.fecha,'Hora':(r.hora||'').slice(0,5),'Unidad':r.unidades?.numero_eco||'—','Placas':r.unidades?.placas||'—','Combustible':r.unidades?.combustible||'—','Estación':r.estaciones?.nombre||'—','Operador':r.operador||'—','Supervisor':r.supervisor||'—','Odómetro (km)':r.odometro_ini||0,'Litros Aut.':r.litros_autorizados||'—','Horario Desde':r.hora_ini||'—','Horario Hasta':r.hora_fin||'—'}));
+
+    const porU={};
+    data.forEach(r=>{const e=r.unidades?.numero_eco||'—';if(!porU[e])porU[e]={u:e,p:r.unidades?.placas||'—',c:r.unidades?.combustible||'—',n:0,l:0};porU[e].n++;if(r.litros_autorizados)porU[e].l+=r.litros_autorizados;});
+    const h2=Object.values(porU).map(u=>({'Unidad':u.u,'Placas':u.p,'Combustible':u.c,'Total Cargas':u.n,'Total Litros':u.l||'—'}));
+
+    const porE={};
+    data.forEach(r=>{const e=r.estaciones?.nombre||'—';if(!porE[e])porE[e]={e,n:0,l:0};porE[e].n++;if(r.litros_autorizados)porE[e].l+=r.litros_autorizados;});
+    const h3=Object.values(porE).map(e=>({'Estación':e.e,'Total Cargas':e.n,'Total Litros':e.l||'—'}));
+
+    const h4=[];
+    const odos={};
+    data.forEach(r=>{const eco=r.unidades?.numero_eco||'—';const odo=r.odometro_ini||0;if(odos[eco]!==undefined&&odo<=odos[eco])h4.push({'Folio':r.folio,'Fecha':r.fecha,'Unidad':eco,'Operador':r.operador||'—','Supervisor':r.supervisor||'—','Odóm. actual':odo,'Odóm. anterior':odos[eco],'Alerta':'Odómetro igual o menor al anterior'});odos[eco]=odo;});
+
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(h1),'Autorizaciones');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(h2),'Por Unidad');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(h3),'Por Estación');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(h4.length?h4:[{Info:'Sin irregularidades'}]),'Irregularidades');
+    XLSX.writeFile(wb,'BioCombustibles_'+fechaIni+'_'+fechaFin+'.xlsx');
+  } catch(err){ alert('Error: '+err.message); console.error(err); }
+  finally{ if(btnEl){ btnEl.textContent='⬇️ Descargar Excel — Reporte General'; btnEl.disabled=false; } }
+}
+
+async function descargarExcelUnidad(){
+  const sel=document.getElementById('r-unidad');
+  const fechaIni=document.getElementById('r-desde').value;
+  const fechaFin=document.getElementById('r-hasta').value;
+  if(!sel?.value){ alert('⚠️ Selecciona una unidad.'); return; }
+  if(!fechaIni||!fechaFin){ alert('⚠️ Selecciona el periodo.'); return; }
+  try {
+    const parts=sel.value.split('|');
+    const eco=parts.length>=4?parts[1]:parts[0];
+    const {data:uRow}=await supa.from('unidades').select('id').eq('numero_eco',eco.trim()).single();
+    if(!uRow){alert('No se encontró la unidad.');return;}
+    const {data,error}=await supa.from('autorizaciones')
+      .select('folio,fecha,hora,operador,supervisor,odometro_ini,litros_autorizados,hora_ini,hora_fin,estaciones(nombre)')
+      .eq('unidad_id',uRow.id).gte('fecha',fechaIni).lte('fecha',fechaFin).order('fecha',{ascending:true});
+    if(error||!data){alert('Error: '+(error?.message||'sin datos'));return;}
+    const rows=data.map(r=>({'Folio':r.folio,'Fecha':r.fecha,'Hora':(r.hora||'').slice(0,5),'Estación':r.estaciones?.nombre||'—','Operador':r.operador||'—','Supervisor':r.supervisor||'—','Odómetro (km)':r.odometro_ini||0,'Litros Aut.':r.litros_autorizados||'—','Horario Desde':r.hora_ini||'—','Horario Hasta':r.hora_fin||'—'}));
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),eco.slice(0,31));
+    XLSX.writeFile(wb,'BioCombustibles_'+eco+'_'+fechaIni+'_'+fechaFin+'.xlsx');
+  } catch(err){alert('Error: '+err.message);}
+}
+
+async function descargarExcelEstacion(){
+  const fechaIni=document.getElementById('r-desde').value;
+  const fechaFin=document.getElementById('r-hasta').value;
+  if(!fechaIni||!fechaFin){alert('⚠️ Selecciona el periodo.');return;}
+  try {
+    const {data,error}=await supa.from('autorizaciones')
+      .select('folio,fecha,hora,operador,supervisor,odometro_ini,litros_autorizados,unidades(numero_eco,placas,combustible),estaciones(nombre)')
+      .gte('fecha',fechaIni).lte('fecha',fechaFin).order('estacion_id',{ascending:true});
+    if(error||!data){alert('Error: '+(error?.message||'sin datos'));return;}
+    const wb=XLSX.utils.book_new();
+    const porEst={};
+    data.forEach(r=>{const e=r.estaciones?.nombre||'Sin estación';if(!porEst[e])porEst[e]=[];porEst[e].push({'Folio':r.folio,'Fecha':r.fecha,'Hora':(r.hora||'').slice(0,5),'Unidad':r.unidades?.numero_eco||'—','Combustible':r.unidades?.combustible||'—','Operador':r.operador||'—','Supervisor':r.supervisor||'—','Odóm.(km)':r.odometro_ini||0,'Litros Aut.':r.litros_autorizados||'—'});});
+    Object.entries(porEst).forEach(([nom,filas])=>{XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(filas),nom.slice(0,31));});
+    XLSX.writeFile(wb,'BioCombustibles_Estaciones_'+fechaIni+'_'+fechaFin+'.xlsx');
+  } catch(err){alert('Error: '+err.message);}
+}
+
+// close modals on overlay click
+document.querySelectorAll('.modal-bg').forEach(m=>{
+  m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('open'); });
+});
+</script>
+</body>
+</html>
