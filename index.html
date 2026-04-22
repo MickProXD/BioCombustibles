@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Bio Combustibles — BioAmbientalistik</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -296,8 +299,8 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
   .main{padding:12px;} .tb-user{display:none;}
 }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" integrity="sha512-Vhndkn3JmW+dvOt7EpwhznaJzkP1c/ldmELpl4mFfTh+6BvPB7KnjcGd0vDRJnDmQqgDK0oYJY17ezTDUoVwow==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfuyQM4tIRAI062MaV8sfjQKYVGjOBaZBOA87z+IhZE9DA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
 
@@ -2129,7 +2132,10 @@ async function crearCuenta(){
   const role   = document.getElementById('nc-role').value;
   const nombre = document.getElementById('nc-nombre').value.trim();
   if(!email || !pass){ alert('⚠️ Correo y contraseña son obligatorios.'); return; }
-  if(pass.length < 6){ alert('⚠️ Mínimo 6 caracteres en la contraseña.'); return; }
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ alert('⚠️ Correo con formato inválido.'); return; }
+  if(pass.length < 8){ alert('⚠️ La contraseña debe tener al menos 8 caracteres.'); return; }
+  if(!/[A-Z]/.test(pass) || !/[0-9]/.test(pass)){ alert('⚠️ La contraseña debe contener al menos una mayúscula y un número.'); return; }
+  if(/^(password|12345|qwerty|admin|bioamb)/i.test(pass)){ alert('⚠️ La contraseña es demasiado común. Elige una más segura.'); return; }
 
   const { data: sd, error: se } = await supa.auth.signUp({
     email, password: pass,
@@ -2583,7 +2589,13 @@ async function eliminarUnidad(id, eco){
 async function eliminarAutorizacion(id, folio){
   if(!id){ alert('No se puede eliminar: registro sin identificador.'); return; }
 
-  const pass = prompt('Para eliminar la autorización '+folio+' ingresa tu contraseña de dirección:');
+  const motivo = prompt('Motivo de eliminación (requerido para auditoría):');
+  if(!motivo || motivo.trim().length < 10){
+    alert('⚠️ Debes proporcionar un motivo de al menos 10 caracteres. Esta acción queda registrada en el log de auditoría.');
+    return;
+  }
+
+  const pass = prompt('Ingresa tu contraseña de dirección para confirmar:');
   if(!pass) return;
 
   // Re-autenticar para confirmar identidad
@@ -2591,15 +2603,40 @@ async function eliminarAutorizacion(id, folio){
   const { error: authErr } = await supa.auth.signInWithPassword({
     email: session.user.email, password: pass
   });
-  if(authErr){ alert('⚠️ Contraseña incorrecta.'); return; }
+  if(authErr){ alert('⚠️ Contraseña incorrecta. Este intento queda registrado.'); 
+    // Registrar intento fallido
+    await supa.from('audit_log').insert({
+      accion: 'ELIMINAR_AUTORIZACION_FALLIDO',
+      tabla: 'autorizaciones',
+      registro_id: String(id),
+      detalle: 'Folio: '+folio+' · Contraseña incorrecta',
+      usuario_id: session?.user?.id || null,
+      usuario_email: session?.user?.email || 'desconocido'
+    });
+    return;
+  }
 
-  if(!confirm('¿Eliminar la autorización '+folio+'?\n\nEsta acción NO se puede deshacer.')) return;
+  if(!confirm('¿Eliminar la autorización '+folio+'?\n\nMotivo registrado: '+motivo+'\n\nEsta acción NO se puede deshacer y queda en el log de auditoría.')) return;
+
+  // Traer snapshot del registro antes de eliminar (para audit)
+  const { data: snapshot } = await supa.from('autorizaciones')
+    .select('*').eq('id', id).single();
 
   const { error } = await supa.from('autorizaciones').delete().eq('id', id);
   if(error){ alert('Error al eliminar: '+error.message); return; }
 
-  alert('✅ Autorización '+folio+' eliminada correctamente.');
-  // Recargar historial
+  // Registrar en audit_log
+  await supa.from('audit_log').insert({
+    accion: 'ELIMINAR_AUTORIZACION',
+    tabla: 'autorizaciones',
+    registro_id: String(id),
+    detalle: 'Folio: '+folio+' · Motivo: '+motivo,
+    datos_previos: snapshot,
+    usuario_id: session?.user?.id || null,
+    usuario_email: session?.user?.email || 'desconocido'
+  });
+
+  alert('✅ Autorización '+folio+' eliminada y registrada en auditoría.');
   cargarHistorialGeneral();
 }
 
