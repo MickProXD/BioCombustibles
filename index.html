@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; base-uri 'self'; form-action 'self';">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
@@ -299,8 +299,8 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
   .main{padding:12px;} .tb-user{display:none;}
 }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" integrity="sha512-Vhndkn3JmW+dvOt7EpwhznaJzkP1c/ldmELpl4mFfTh+6BvPB7KnjcGd0vDRJnDmQqgDK0oYJY17ezTDUoVwow==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfuyQM4tIRAI062MaV8sfjQKYVGjOBaZBOA87z+IhZE9DA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -449,8 +449,16 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
       </div>
 
       <div class="card">
-        <div class="card-title">Nueva Autorización</div>
-        <div class="card-sub">La asignación de litros se calculará automáticamente con base en el historial de la unidad</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div>
+            <div class="card-title">Nueva Autorización</div>
+            <div class="card-sub">La asignación de litros se calculará automáticamente con base en el historial de la unidad</div>
+          </div>
+          <label id="toggle-especial-wrap" style="display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--amarillo-t);border:1.5px solid var(--amarillo);border-radius:8px;padding:8px 14px">
+            <input type="checkbox" id="toggle-especial" onchange="toggleCargaEspecial(this)" style="width:16px;height:16px;accent-color:var(--amarillo);cursor:pointer">
+            <span style="font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;color:var(--amarillo)">⚡ Carga Especial</span>
+          </label>
+        </div>
 
         <div class="steps">
           <div class="step-item"><div class="step-c act" id="sc1">1</div><div class="step-n act" id="sn1">Identificación</div></div>
@@ -535,6 +543,39 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
             </label>
             <img id="foto-preview" src="" alt="Vista previa" style="display:none;width:100%;max-height:180px;object-fit:contain;border-radius:var(--r-sm);margin-top:8px;border:1.5px solid var(--gris-borde)">
           </div>
+          <!-- ── BLOQUE CARGA ESPECIAL ── -->
+          <div id="bloque-especial" style="display:none;margin-top:16px">
+            <div style="background:var(--amarillo-t);border:2px solid var(--amarillo);border-radius:var(--r-sm);padding:14px 16px;margin-bottom:14px">
+              <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:13px;color:var(--amarillo);margin-bottom:4px">⚡ Carga Especial — Requiere aprobación de Dirección</div>
+              <div style="font-size:11px;color:var(--text-sub)">Llena todos los campos. Esta carga quedará marcada para revisión de dirección.</div>
+            </div>
+            <div class="fg" style="gap:13px;margin-bottom:13px">
+              <div class="fgg">
+                <label class="lbl">Nombre de la estación externa *</label>
+                <input class="inp" type="text" id="esp-estacion" placeholder="Ej. PEMEX Av. Central No. 123" oninput="this.value=this.value.toUpperCase()" style="margin:0;text-transform:uppercase">
+              </div>
+              <div class="fgg">
+                <label class="lbl">Precio por litro (MXN) *</label>
+                <input class="inp" type="number" id="esp-precio" placeholder="Ej. 28.50" min="1" max="99" step="0.01" style="margin:0">
+              </div>
+            </div>
+            <div class="fg" style="gap:13px;margin-bottom:13px">
+              <div class="fgg">
+                <label class="lbl">Folio del ticket *</label>
+                <input class="inp" type="text" id="esp-folio-ticket" placeholder="Número o código del ticket" oninput="this.value=this.value.toUpperCase()" style="margin:0;text-transform:uppercase">
+              </div>
+              <div class="fgg">
+                <label class="lbl">Número para facturar (RFC) *</label>
+                <input class="inp" type="text" id="esp-rfc" placeholder="Ej. BIO201012TK3" oninput="this.value=this.value.toUpperCase()" style="margin:0;text-transform:uppercase">
+              </div>
+            </div>
+            <div class="fgg" style="margin-bottom:4px">
+              <label class="lbl">Motivo de la carga especial *</label>
+              <textarea class="inp" id="esp-motivo" placeholder="Describe brevemente por qué se realizó en esta estación (mínimo 15 caracteres)" rows="2" style="margin:0;resize:none;font-family:'Nunito',sans-serif"></textarea>
+            </div>
+            <div style="font-size:11px;color:var(--text-sub);margin-top:4px;margin-bottom:4px">📸 El supervisor debe conservar el ticket físico como respaldo.</div>
+          </div>
+
           <div class="btn-row">
             <button class="btn-ghost" onclick="irPaso(1)">← Atrás</button>
             <button class="btn-main" onclick="irPaso(3)">Vista previa →</button>
@@ -1895,6 +1936,40 @@ function buildPreview(){
   document.getElementById('aut-preview').dataset.fecha     = fv[2]+'/'+fv[1]+'/'+fv[0];
   document.getElementById('aut-preview').dataset.hora_ini  = hIni;
   document.getElementById('aut-preview').dataset.hora_fin  = hFin;
+
+  // ── Carga especial: validar y guardar datos ──
+  if(esCargaEspecial){
+    const espEst    = document.getElementById('esp-estacion').value.trim();
+    const espPrecio = document.getElementById('esp-precio').value;
+    const espTicket = document.getElementById('esp-folio-ticket').value.trim();
+    const espRfc    = document.getElementById('esp-rfc').value.trim();
+    const espMotivo = document.getElementById('esp-motivo').value.trim();
+
+    if(!espEst)   { alert('⚠️ Carga especial: escribe el nombre de la estación externa.'); return; }
+    if(!espPrecio || parseFloat(espPrecio) <= 0){ alert('⚠️ Carga especial: ingresa el precio por litro.'); return; }
+    if(!espTicket){ alert('⚠️ Carga especial: ingresa el folio del ticket.'); return; }
+    if(!espRfc)   { alert('⚠️ Carga especial: ingresa el número para facturar.'); return; }
+    if(espMotivo.length < 15){ alert('⚠️ Carga especial: el motivo debe tener al menos 15 caracteres.'); return; }
+
+    document.getElementById('aut-preview').dataset.especial     = '1';
+    document.getElementById('aut-preview').dataset.esp_est      = espEst;
+    document.getElementById('aut-preview').dataset.esp_precio   = espPrecio;
+    document.getElementById('aut-preview').dataset.esp_ticket   = espTicket;
+    document.getElementById('aut-preview').dataset.esp_rfc      = espRfc;
+    document.getElementById('aut-preview').dataset.esp_motivo   = espMotivo;
+
+    // Mostrar badge en preview
+    const folioEl = document.getElementById('pr-folio');
+    if(folioEl && !folioEl.nextElementSibling?.classList.contains('esp-badge')){
+      const badge = document.createElement('span');
+      badge.className = 'esp-badge';
+      badge.style.cssText = 'display:inline-block;background:var(--amarillo);color:#fff;font-size:10px;font-weight:900;padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle';
+      badge.textContent = '⚡ ESPECIAL';
+      folioEl.parentNode.insertBefore(badge, folioEl.nextSibling);
+    }
+  } else {
+    document.getElementById('aut-preview').dataset.especial = '';
+  }
 }
 
 function guardarAut(){
@@ -1922,6 +1997,12 @@ function guardarAut(){
     odo:        ds.odo_na ? '0' : Number(ds.odo).toLocaleString('es-MX'),
     odo_na:     ds.odo_na === '1',
     litros:     ds.litros || '',
+    especial:   ds.especial === '1',
+    esp_est:    ds.esp_est || '',
+    esp_precio: ds.esp_precio || '',
+    esp_ticket: ds.esp_ticket || '',
+    esp_rfc:    ds.esp_rfc || '',
+    esp_motivo: ds.esp_motivo || '',
     hora_ini:   ds.hora_ini,
     hora_fin:   ds.hora_fin
   };
@@ -1945,13 +2026,17 @@ async function guardarEnSupa(reg, folio){
     unidadId = uRow.id;
   }
 
-  const estNorm = reg.est.replace(/\s+/g,' ').trim().toUpperCase();
-  const { data: eRow } = await supa.from('estaciones').select('id').ilike('nombre', estNorm).single();
-
-  if(!eRow){
-    alert('\u26a0\ufe0f No se encontr\u00f3 la estaci\u00f3n "'+reg.est+'" en la base de datos.');
-    if(btn){ btn.textContent='\u2705 Guardar autorizaci\u00f3n'; btn.disabled=false; }
-    return;
+  // Si es carga especial, la estación no existe en el catálogo — usar null y guardar datos externos
+  let estacionId = null;
+  if(!reg.especial){
+    const estNorm = reg.est.replace(/\s+/g,' ').trim().toUpperCase();
+    const { data: eRow } = await supa.from('estaciones').select('id').ilike('nombre', estNorm).single();
+    if(!eRow){
+      alert('\u26a0\ufe0f No se encontr\u00f3 la estaci\u00f3n "'+reg.est+'" en la base de datos.');
+      if(btn){ btn.textContent='\u2705 Guardar autorizaci\u00f3n'; btn.disabled=false; }
+      return;
+    }
+    estacionId = eRow.id;
   }
 
   const { data: { session } } = await supa.auth.getSession();
@@ -1961,12 +2046,18 @@ async function guardarEnSupa(reg, folio){
     fecha:        new Date().toISOString().split('T')[0],
     hora:         reg.hora+':00', // asegurar formato HH:MM:SS para Supabase
     unidad_id:    unidadId,
-    estacion_id:  eRow.id,
+    estacion_id:  estacionId,
     operador:     reg.operador,
     supervisor:   reg.supervisor,
     odometro_ini:       reg.odo_na ? null : parseInt((reg.odo||'0').replace(/,/g,'')),
     odo_no_disponible:  reg.odo_na ? true : false,
     litros_autorizados: reg.litros ? parseInt(reg.litros) : null,
+    es_especial:        reg.especial || false,
+    esp_estacion:       reg.especial ? reg.esp_est   : null,
+    esp_precio_litro:   reg.especial ? parseFloat(reg.esp_precio) : null,
+    esp_folio_ticket:   reg.especial ? reg.esp_ticket : null,
+    esp_rfc:            reg.especial ? reg.esp_rfc    : null,
+    esp_motivo:         reg.especial ? reg.esp_motivo : null,
     hora_ini:           reg.hora_ini || null,
     hora_fin:           reg.hora_fin || null,
     creado_por:   session?.user?.id || null
@@ -1985,6 +2076,12 @@ async function guardarEnSupa(reg, folio){
   ['a-sup','a-unidad','a-op','a-odo','a-litros'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   const odoNaEl = document.getElementById('a-odo-na');
   if(odoNaEl){ odoNaEl.checked=false; toggleOdoNA(odoNaEl); }
+  // Reset carga especial
+  const espToggle = document.getElementById('toggle-especial');
+  if(espToggle){ espToggle.checked=false; toggleCargaEspecial(espToggle); }
+  esCargaEspecial = false;
+  // Limpiar badge especial del preview
+  document.querySelectorAll('.esp-badge').forEach(b=>b.remove());
   const fotoInput = document.getElementById('foto-odometro');
   const fotoPrev  = document.getElementById('foto-preview');
   const fotoTxt   = document.getElementById('foto-txt');
@@ -2250,7 +2347,8 @@ async function cargarUnidad(val){
     tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:28px;color:var(--text-sub)">Sin registros en el periodo seleccionado.</td></tr>';
   } else {
     tbody.innerHTML = lista.map(r=>{
-      const horario = (r.hora_ini && r.hora_fin) ? r.hora_ini+' — '+r.hora_fin : '—';
+      const horario  = (r.hora_ini && r.hora_fin) ? r.hora_ini+' — '+r.hora_fin : '—';
+    const espBadge = r.es_especial ? ' <span style="background:var(--amarillo);color:#fff;font-size:9px;font-weight:900;padding:1px 6px;border-radius:10px;vertical-align:middle">⚡</span>' : '';
       return `<tr>
         <td>${r.folio}</td>
         <td>${r.fecha}</td>
@@ -2307,6 +2405,32 @@ async function calcAsig(){
   // Ocultar warning al cambiar de unidad
   const warn = document.getElementById('odo-warn');
   if(warn) warn.style.display='none';
+}
+
+// ════════════ CARGA ESPECIAL ════════════
+let esCargaEspecial = false;
+
+function toggleCargaEspecial(cb){
+  esCargaEspecial = cb.checked;
+  const bloque = document.getElementById('bloque-especial');
+  const estLista = document.getElementById('est-lista');
+  const estLabel = estLista?.previousElementSibling;
+
+  if(esCargaEspecial){
+    if(bloque) bloque.style.display = 'block';
+    // Ocultar selector de estaciones normales (se usará la externa)
+    if(estLista) estLista.style.opacity = '0.4';
+    if(estLista) estLista.style.pointerEvents = 'none';
+  } else {
+    if(bloque) bloque.style.display = 'none';
+    if(estLista) estLista.style.opacity = '1';
+    if(estLista) estLista.style.pointerEvents = 'auto';
+    // Limpiar campos especiales
+    ['esp-estacion','esp-precio','esp-folio-ticket','esp-rfc','esp-motivo'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.value = '';
+    });
+  }
 }
 
 function toggleOdoNA(cb){
@@ -3002,7 +3126,7 @@ async function cargarAutorizacionesDia(){
   const { data, error } = await supa
     .from('autorizaciones')
     .select(`
-      id, folio, hora, fecha, operador, supervisor, odometro_ini, litros_autorizados, hora_ini, hora_fin,
+      id, folio, hora, fecha, operador, supervisor, odometro_ini, litros_autorizados, es_especial, esp_estacion, esp_precio_litro, esp_folio_ticket, esp_rfc, esp_motivo, hora_ini, hora_fin,
       unidades(numero_eco, placas, combustible),
       estaciones(nombre)
     `)
@@ -3035,7 +3159,7 @@ async function cargarHistorialGeneral(){
   const { data, error } = await supa
     .from('autorizaciones')
     .select(`
-      id, folio, hora, fecha, operador, supervisor, odometro_ini, litros_autorizados, hora_ini, hora_fin,
+      id, folio, hora, fecha, operador, supervisor, odometro_ini, litros_autorizados, es_especial, esp_estacion, esp_precio_litro, esp_folio_ticket, esp_rfc, esp_motivo, hora_ini, hora_fin,
       unidades(numero_eco, placas, combustible),
       estaciones(nombre)
     `)
@@ -3052,9 +3176,10 @@ async function cargarHistorialGeneral(){
 
   historialData = data; // guardar referencia global para acceso por índice
   tbody.innerHTML = data.map((r, idx) => {
-    const horario = (r.hora_ini && r.hora_fin) ? r.hora_ini+' — '+r.hora_fin : '—';
+    const horario  = (r.hora_ini && r.hora_fin) ? r.hora_ini+' — '+r.hora_fin : '—';
+    const espBadge = r.es_especial ? ' <span style="background:var(--amarillo);color:#fff;font-size:9px;font-weight:900;padding:1px 6px;border-radius:10px;vertical-align:middle">⚡</span>' : '';
     return `<tr>
-      <td>${r.folio}</td>
+      <td>${r.folio}${espBadge||''}</td>
       <td>${r.fecha}</td>
       <td>${r.hora?.slice(0,5)||'—'}</td>
       <td class="tu">${r.unidades?.numero_eco||'—'}</td>
