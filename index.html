@@ -1204,12 +1204,21 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
         <div class="pg-title">👤 Mi Perfil</div>
         <div class="pg-sub">Actualiza tu información básica</div>
       </div>
+      <!-- Banner si no tiene nombre -->
+      <div id="banner-perfil-incompleto" style="display:none;background:var(--ambar-t);border:1.5px solid var(--amarillo);border-radius:10px;padding:14px 16px;margin-bottom:16px">
+        <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:13px;color:var(--amarillo);margin-bottom:4px">⚠️ Tu perfil está incompleto</div>
+        <div style="font-size:12px;color:var(--text-sub)">Agrega tu nombre completo para poder generar autorizaciones de carga.</div>
+      </div>
       <div class="card" style="max-width:480px">
-        <div class="card-title">Información personal</div>
-        <div class="card-sub" style="margin-bottom:16px">Solo tú puedes ver y editar esta información</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <div class="card-title" style="margin:0">Mi Perfil</div>
+          <span style="font-size:11px;color:var(--text-sub);background:var(--gris-claro);padding:3px 10px;border-radius:20px">Solo editas tu nombre y teléfono</span>
+        </div>
+        <div class="card-sub" style="margin-bottom:16px">Esta información aparecerá en todas tus autorizaciones</div>
         <div class="fgg" style="margin-bottom:13px">
-          <label class="lbl">Nombre para mostrar</label>
-          <input class="inp" type="text" id="sup-nombre" placeholder="Tu nombre completo" style="margin:0">
+          <label class="lbl">Tu nombre completo *</label>
+          <input class="inp" type="text" id="sup-nombre" placeholder="Ej. JUAN HERNANDEZ" oninput="this.value=this.value.toUpperCase()" style="margin:0;text-transform:uppercase">
+          <div style="font-size:11px;color:var(--text-sub);margin-top:4px">Este nombre aparecerá en cada autorización que generes</div>
         </div>
         <div class="fgg" style="margin-bottom:13px">
           <label class="lbl">Número de contacto</label>
@@ -1707,11 +1716,14 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
   <div style="background:#fff;border-radius:16px;max-width:440px;width:100%;padding:32px 28px;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center">
     <div style="font-size:40px;margin-bottom:12px">👤</div>
     <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;color:#1A1A1A;margin-bottom:8px">Perfil incompleto</div>
-    <div style="font-size:14px;color:#6b7a68;margin-bottom:6px;line-height:1.6">Para generar una autorización de carga, tu cuenta debe tener el <strong>nombre del supervisor</strong> registrado correctamente.</div>
-    <div style="font-size:13px;color:#6b7a68;margin-bottom:24px;line-height:1.6">Este requisito garantiza que todas las autorizaciones queden firmadas con el nombre oficial del supervisor responsable. Por favor completa tu perfil antes de continuar.</div>
+    <div style="font-size:14px;color:#6b7a68;margin-bottom:12px;line-height:1.6">Tu cuenta aún no tiene nombre registrado. Para generar autorizaciones, necesitas agregar <strong>tu nombre completo</strong> en tu perfil — tarda menos de un minuto.</div>
+    <div style="background:#e8f5e4;border-radius:8px;padding:12px 14px;margin-bottom:20px;text-align:left">
+      <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;color:#2D5A27;margin-bottom:4px">¿Cómo hacerlo?</div>
+      <div style="font-size:12px;color:#5A5A5A;line-height:1.7">1. Toca <strong>"Completar mi perfil"</strong> abajo<br>2. Escribe tu nombre completo<br>3. Guarda los cambios<br>4. Regresa aquí para continuar</div>
+    </div>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-      <button onclick="cerrarModalPerfilReq()" style="padding:10px 20px;border:2px solid #d8e4d3;border-radius:8px;background:#fff;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer;color:#5A5A5A">Cancelar</button>
-      <button onclick="irAPerfilDesdeModal()" style="padding:10px 22px;border:none;border-radius:8px;background:#2D5A27;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer;color:#fff">Ir a Mi Perfil →</button>
+      <button onclick="cerrarModalPerfilReq()" style="padding:10px 20px;border:2px solid #d8e4d3;border-radius:8px;background:#fff;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer;color:#5A5A5A">Ahora no</button>
+      <button onclick="irAPerfilDesdeModal()" style="padding:10px 22px;border:none;border-radius:8px;background:#2D5A27;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer;color:#fff">✏️ Completar mi perfil →</button>
     </div>
   </div>
 </div>
@@ -2598,6 +2610,9 @@ async function cargarPerfil(){
     .select('nombre, rol').eq('id', session.user.id).single();
   if(perfil){
     document.getElementById('sup-nombre').value  = perfil.nombre || '';
+    // Mostrar banner si nombre está vacío
+    const banner = document.getElementById('banner-perfil-incompleto');
+    if(banner) banner.style.display = (!perfil.nombre || perfil.nombre.trim().length < 3) ? 'block' : 'none';
     document.getElementById('sup-puesto').value  = perfil.puesto || '';
     document.getElementById('sup-tel').value     = perfil.telefono || '';
   }
@@ -2625,7 +2640,10 @@ async function guardarPerfil(){
   if(nombre) perfilNombreGlobal = nombre;
   const supInput = document.getElementById('a-sup');
   if(supInput) supInput.value = nombre || supInput.value;
-  alert('✅ Perfil actualizado correctamente.');
+  // Ocultar banner de perfil incompleto
+  const banner = document.getElementById('banner-perfil-incompleto');
+  if(banner) banner.style.display = 'none';
+  alert('✅ Perfil actualizado. Ya puedes generar autorizaciones.');
 }
 
 // ════════════ UNIDADES ════════════
