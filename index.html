@@ -613,10 +613,10 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
             </div>
             <div class="aut-doc-ft">BioAmbientalistik S.A. de C.V. · Documento generado electrónicamente.</div>
           </div>
-          <div class="cap-hint">Toma captura de pantalla para compartir la autorización.</div>
+          <div class="cap-hint"></div>
           <div class="btn-row">
             <button class="btn-ghost" onclick="irPaso(2)">← Editar</button>
-            <button class="btn-main" onclick="guardarAut()">✅ Guardar autorización</button>
+            <button class="btn-main" onclick="mostrarModalCaptura()">✅ Guardar autorización</button>
           </div>
         </div>
       </div>
@@ -1684,6 +1684,38 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
   </div>
 </div>
 
+<!-- ══ MODAL CAPTURA DE PANTALLA ══ -->
+<div id="modal-captura" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:16px;max-width:460px;width:100%;padding:32px 28px;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center">
+    <div style="font-size:48px;margin-bottom:12px">📸</div>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;color:#1A1A1A;margin-bottom:8px">Toma la captura de pantalla</div>
+    <div style="font-size:14px;color:#6b7a68;line-height:1.7;margin-bottom:8px">Antes de finalizar, toma una captura de pantalla de esta autorización.</div>
+    <div style="background:#e8f5e4;border-radius:10px;padding:14px 16px;margin-bottom:12px;text-align:left">
+      <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;color:#2D5A27;margin-bottom:6px">📋 Comparte la captura con:</div>
+      <div style="font-size:13px;color:#5A5A5A;line-height:1.8">• <strong>La estación de carga</strong> — para que sepan cuánto cargar<br>• <strong>El operador / chofer</strong> — como comprobante de su autorización</div>
+    </div>
+    <div style="font-size:12px;color:#6b7a68;margin-bottom:24px;font-style:italic">Una vez tomada la captura, presiona <strong>"Captura lista — Guardar"</strong> para registrar la autorización en el sistema.</div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button onclick="cerrarModalCaptura()" style="padding:11px 20px;border:2px solid #d8e4d3;border-radius:8px;background:#fff;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer;color:#5A5A5A">← Cancelar</button>
+      <button onclick="confirmarGuardar()" style="padding:11px 22px;border:none;border-radius:8px;background:#2D5A27;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;cursor:pointer;color:#fff">📸 Captura lista — Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL PERFIL REQUERIDO ══ -->
+<div id="modal-perfil-req" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:16px;max-width:440px;width:100%;padding:32px 28px;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center">
+    <div style="font-size:40px;margin-bottom:12px">👤</div>
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;color:#1A1A1A;margin-bottom:8px">Perfil incompleto</div>
+    <div style="font-size:14px;color:#6b7a68;margin-bottom:6px;line-height:1.6">Para generar una autorización de carga, tu cuenta debe tener el <strong>nombre del supervisor</strong> registrado correctamente.</div>
+    <div style="font-size:13px;color:#6b7a68;margin-bottom:24px;line-height:1.6">Este requisito garantiza que todas las autorizaciones queden firmadas con el nombre oficial del supervisor responsable. Por favor completa tu perfil antes de continuar.</div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button onclick="cerrarModalPerfilReq()" style="padding:10px 20px;border:2px solid #d8e4d3;border-radius:8px;background:#fff;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer;color:#5A5A5A">Cancelar</button>
+      <button onclick="irAPerfilDesdeModal()" style="padding:10px 22px;border:none;border-radius:8px;background:#2D5A27;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer;color:#fff">Ir a Mi Perfil →</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ════════════ SUPABASE INIT ════════════
 const SUPA_URL = 'https://wcokjrudktajuddowyfn.supabase.co';
@@ -1706,6 +1738,20 @@ let sbOpen = false;
 let editingEst = null;
 
 // ════════════ INIT ════════════
+// Heartbeat — registrar actividad cada 5 minutos para medir tiempo en plataforma
+let heartbeatInterval = null;
+function iniciarHeartbeat(userId, email){
+  if(heartbeatInterval) clearInterval(heartbeatInterval);
+  heartbeatInterval = setInterval(async () => {
+    await supa.from('session_log').insert({
+      usuario_id:    userId,
+      usuario_email: email,
+      evento:        'HEARTBEAT',
+      ts:            new Date().toISOString()
+    });
+  }, 5 * 60 * 1000); // cada 5 minutos
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   // Establecer fecha de hoy en el campo a-fecha (evita campo vacío en móviles antiguos)
   const fechaEl = document.getElementById('a-fecha');
@@ -1811,6 +1857,18 @@ function iniciarApp(email, rol, nombre){
 }
 
 async function doLogout(){
+  // Registrar cierre de sesión en session_log
+  try {
+    const { data: { session } } = await supa.auth.getSession();
+    if(session){
+      await supa.from('session_log').insert({
+        usuario_id:    session.user.id,
+        usuario_email: session.user.email,
+        evento:        'LOGOUT',
+        ts:            new Date().toISOString()
+      });
+    }
+  } catch(e){ console.warn('session_log logout:', e); }
   await supa.auth.signOut(); // cerrar sesión en Supabase
   curRole = null; closeSB();
   document.getElementById('app').style.display = 'none';
@@ -1863,6 +1921,13 @@ function showPage(name){
 let pasoActual = 1;
 
 function irPaso(n){
+  if(n===2){
+    // Bloquear si el perfil no tiene nombre registrado
+    if(!perfilNombreGlobal || perfilNombreGlobal.trim().length < 3){
+      mostrarModalPerfil();
+      return;
+    }
+  }
   if(n===2 && !document.getElementById('a-sup').value.trim()){ alert('⚠️ Escribe tu nombre para continuar.'); return; }
   if(n===3){
     if(!document.getElementById('a-unidad').value){ alert('⚠️ Selecciona una unidad.'); return; }
@@ -1970,6 +2035,20 @@ function buildPreview(){
   } else {
     document.getElementById('aut-preview').dataset.especial = '';
   }
+}
+
+// ════════════ MODAL CAPTURA DE PANTALLA ════════════
+function mostrarModalCaptura(){
+  const m = document.getElementById('modal-captura');
+  if(m) m.style.display = 'flex';
+}
+function cerrarModalCaptura(){
+  const m = document.getElementById('modal-captura');
+  if(m) m.style.display = 'none';
+}
+function confirmarGuardar(){
+  cerrarModalCaptura();
+  guardarAut();
 }
 
 function guardarAut(){
@@ -2409,6 +2488,7 @@ async function calcAsig(){
 
 // ════════════ CARGA ESPECIAL ════════════
 let esCargaEspecial = false;
+let perfilNombreGlobal = ''; // nombre cargado desde perfil del supervisor activo
 
 function toggleCargaEspecial(cb){
   esCargaEspecial = cb.checked;
@@ -2541,6 +2621,10 @@ async function guardarPerfil(){
     .eq('id', session.user.id);
 
   if(error){ alert('Error al guardar: '+error.message); return; }
+  // Actualizar variable global con el nuevo nombre
+  if(nombre) perfilNombreGlobal = nombre;
+  const supInput = document.getElementById('a-sup');
+  if(supInput) supInput.value = nombre || supInput.value;
   alert('✅ Perfil actualizado correctamente.');
 }
 
@@ -3269,6 +3353,118 @@ function irAInicio(){
   closeSB();
 }
 
+// ════════════ ACTIVIDAD DE SESIONES EN DASHBOARD ════════════
+let chartSesiones = null;
+
+async function cargarActividadSesiones(periodo = 'semana'){
+  // Resaltar botón activo
+  ['btn-ses-sem','btn-ses-mes'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.style.background = '';
+  });
+  const btnActivo = document.getElementById(periodo === 'semana' ? 'btn-ses-sem' : 'btn-ses-mes');
+  if(btnActivo) btnActivo.style.background = 'var(--verde-tenue)';
+
+  // Calcular fecha de inicio
+  const ahora = new Date();
+  const inicio = new Date(ahora);
+  if(periodo === 'semana') inicio.setDate(ahora.getDate() - 7);
+  else inicio.setDate(ahora.getDate() - 30);
+  const inicioISO = inicio.toISOString();
+
+  // Traer registros de session_log
+  const { data, error } = await supa.from('session_log')
+    .select('usuario_email, evento, ts')
+    .gte('ts', inicioISO)
+    .order('ts', { ascending: true });
+
+  if(error || !data || data.length === 0){
+    const tbody = document.getElementById('tbody-sesiones');
+    if(tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-sub)">Sin datos de sesión registrados aún. Los datos aparecerán cuando los supervisores inicien sesión.</td></tr>';
+    return;
+  }
+
+  // ── Procesar datos por hora ──
+  const horaCount = Array(24).fill(0);
+  const porUsuario = {};
+
+  data.forEach(r => {
+    const fecha = new Date(r.ts);
+    const hora = fecha.getHours();
+    horaCount[hora]++;
+
+    const email = r.usuario_email || 'Desconocido';
+    if(!porUsuario[email]) porUsuario[email] = {
+      email, ultimaConexion: null, sesionesHoy: 0,
+      heartbeatsHoy: 0, horaCounts: Array(24).fill(0)
+    };
+
+    const hoy = new Date();
+    const esHoy = fecha.toDateString() === hoy.toDateString();
+
+    if(r.evento === 'LOGIN'){
+      if(!porUsuario[email].ultimaConexion || fecha > porUsuario[email].ultimaConexion)
+        porUsuario[email].ultimaConexion = fecha;
+      if(esHoy) porUsuario[email].sesionesHoy++;
+    }
+    if(r.evento === 'HEARTBEAT' && esHoy) porUsuario[email].heartbeatsHoy++;
+    porUsuario[email].horaCounts[hora]++;
+  });
+
+  // ── Gráfica de barras por hora ──
+  const canvas = document.getElementById('chart-sesiones-hora');
+  if(canvas){
+    if(chartSesiones) chartSesiones.destroy();
+    const ctx = canvas.getContext('2d');
+    const labels = Array.from({length:24}, (_,i) => i.toString().padStart(2,'0')+'h');
+    chartSesiones = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Actividad por hora',
+          data: horaCount,
+          backgroundColor: horaCount.map(v => v >= Math.max(...horaCount) * 0.7 ? '#2D5A27' : '#4A8C3F55'),
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f0f0f0' } },
+          x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+        }
+      }
+    });
+  }
+
+  // ── Tabla de resumen por usuario ──
+  const tbody = document.getElementById('tbody-sesiones');
+  if(tbody){
+    const filas = Object.values(porUsuario).map(u => {
+      const tiempoMin = u.heartbeatsHoy * 5;
+      const tiempoStr = tiempoMin < 5 ? 'Menos de 5 min' : tiempoMin >= 60
+        ? Math.floor(tiempoMin/60)+'h '+( tiempoMin%60)+'min'
+        : tiempoMin+' min';
+      const horaPico = u.horaCounts.indexOf(Math.max(...u.horaCounts));
+      const ultimaCon = u.ultimaConexion
+        ? u.ultimaConexion.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})+' · '+u.ultimaConexion.toLocaleDateString('es-MX',{day:'2-digit',month:'short'})
+        : '—';
+      // Extraer nombre del email
+      const emailShort = u.email.split('@')[0];
+      return `<tr>
+        <td><span style="font-weight:700">${emailShort}</span><br><span style="font-size:11px;color:var(--text-sub)">${u.email}</span></td>
+        <td>${ultimaCon}</td>
+        <td style="text-align:center;font-weight:700;color:var(--verde)">${u.sesionesHoy}</td>
+        <td style="text-align:center;font-weight:700;color:var(--verde)">${tiempoStr}</td>
+        <td style="text-align:center">${horaPico.toString().padStart(2,'0')}:00 hrs</td>
+      </tr>`;
+    });
+    tbody.innerHTML = filas.join('') || '<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--text-sub)">Sin actividad en el período seleccionado.</td></tr>';
+  }
+}
+
 // ════════════ EXCEL CON SHEETJS ════════════
 async function descargarExcel(){
   const btnEl = document.querySelector('[onclick="descargarExcel()"]');
@@ -3344,6 +3540,28 @@ async function descargarExcelEstacion(){
     Object.entries(porEst).forEach(([nom,filas])=>{XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(filas),nom.slice(0,31));});
     XLSX.writeFile(wb,'BioCombustibles_Estaciones_'+fechaIni+'_'+fechaFin+'.xlsx');
   } catch(err){alert('Error: '+err.message);}
+}
+
+// ════════════ MODAL PERFIL INCOMPLETO ════════════
+function mostrarModalPerfil(){
+  const m = document.getElementById('modal-perfil-req');
+  if(m) m.style.display = 'flex';
+}
+function cerrarModalPerfilReq(){
+  const m = document.getElementById('modal-perfil-req');
+  if(m) m.style.display = 'none';
+}
+function irAPerfilDesdeModal(){
+  cerrarModalPerfilReq();
+  // Navegar a Mi Perfil
+  const rol = curRole;
+  if(rol === 'supervisor'){
+    const el = document.querySelector('#sb-sup .sb-item[onclick*="ajustes-sup"]');
+    if(el) navTo('ajustes-sup','sb-sup',el);
+  } else {
+    const el = document.querySelector('#sb-dir .sb-item[onclick*="ajustes"]');
+    if(el) navTo('ajustes','sb-dir',el);
+  }
 }
 
 // close modals on overlay click
