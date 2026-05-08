@@ -471,7 +471,11 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
         <!-- P1 -->
         <div id="paso1">
           <div class="fg">
-            <div class="fgg"><label class="lbl">Tu nombre (Supervisor) *</label><input class="inp" type="text" id="a-sup" placeholder="Nombre completo" oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase"></div>
+            <div class="fgg">
+              <label class="lbl" id="lbl-sup-nombre">Tu nombre (Supervisor) *</label>
+              <input class="inp" type="text" id="a-sup" placeholder="Nombre completo" oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase">
+              <div id="sup-nombre-hint" style="display:none;font-size:11px;color:var(--verde);margin-top:4px">✅ Nombre cargado desde tu perfil</div>
+            </div>
             <div class="fgg"><label class="lbl">Fecha de operación</label><input class="inp" type="date" id="a-fecha"></div>
           </div>
           <div class="btn-row"><button class="btn-main" onclick="irPaso(2)">Continuar →</button></div>
@@ -1934,10 +1938,12 @@ let pasoActual = 1;
 
 function irPaso(n){
   if(n===2){
-    // Bloquear si el perfil no tiene nombre registrado
-    if(!perfilNombreGlobal || perfilNombreGlobal.trim().length < 3){
-      mostrarModalPerfil();
-      return;
+    // Solo bloquear supervisores — dirección puede generar libremente
+    if(curRole === 'supervisor'){
+      if(!perfilNombreGlobal || perfilNombreGlobal.trim().length < 3){
+        mostrarModalPerfil();
+        return;
+      }
     }
   }
   if(n===2 && !document.getElementById('a-sup').value.trim()){ alert('⚠️ Escribe tu nombre para continuar.'); return; }
@@ -2639,7 +2645,15 @@ async function guardarPerfil(){
   // Actualizar variable global con el nuevo nombre
   if(nombre) perfilNombreGlobal = nombre;
   const supInput = document.getElementById('a-sup');
-  if(supInput) supInput.value = nombre || supInput.value;
+  if(supInput && nombre){
+    supInput.value = nombre;
+    if(curRole === 'supervisor'){
+      supInput.readOnly = true;
+      supInput.style.background = 'var(--verde-tenue)';
+      supInput.style.color = 'var(--verde)';
+      supInput.style.fontWeight = '800';
+    }
+  }
   // Ocultar banner de perfil incompleto
   const banner = document.getElementById('banner-perfil-incompleto');
   if(banner) banner.style.display = 'none';
