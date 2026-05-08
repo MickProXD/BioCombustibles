@@ -340,7 +340,7 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
     </button>
     <div class="tb-logo"><img src="" alt="Bio" onerror="this.style.display='none'"></div>
     <div class="tb-sep"></div>
-    <div class="tb-name" onclick="irAInicio()" style="cursor:pointer">Bio<span>Combustibles</span> <span style="font-size:10px;font-weight:600;color:rgba(255,255,255,.3);letter-spacing:1px">v1.2</span></div>
+    <div class="tb-name" onclick="irAInicio()" style="cursor:pointer">Bio<span>Combustibles</span> <span style="font-size:10px;font-weight:600;color:rgba(255,255,255,.3);letter-spacing:1px">v1.3</span></div>
     <div class="tb-right">
       <span class="tb-role" id="tb-role">Supervisor</span>
       <span class="tb-user" id="tb-user"></span>
@@ -1430,7 +1430,7 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
       <div class="card" style="border-left:4px solid var(--verde);margin-bottom:20px" id="update-v12">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
           <div>
-            <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;color:var(--verde)">BioCombustibles v1.2</div>
+            <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;color:var(--verde)">BioCombustibles v1.3</div>
             <div style="font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;color:var(--text-sub);letter-spacing:1px;text-transform:uppercase">— "Ojos Abiertos" —</div>
           </div>
           <span class="bdg bdg-ok">Versión actual</span>
@@ -1462,7 +1462,7 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
               <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;color:var(--verde)">Novedades para Supervisores</div>
               <div style="font-size:11px;color:var(--text-sub);margin-top:2px">Cambios recientes que afectan tu flujo de trabajo</div>
             </div>
-            <span class="bdg bdg-ok">v1.2</span>
+            <span class="bdg bdg-ok">v1.3</span>
           </div>
           <ul style="font-size:13px;color:var(--text);line-height:1.9;padding-left:18px">
             <li>El botón de acceso ahora dice "Iniciar Sesión"</li>
@@ -1856,6 +1856,7 @@ async function doLogin(){
 }
 
 function iniciarApp(email, rol, nombre){
+  if(typeof nombre !== 'undefined' && nombre && !nombre.includes('@')) perfilNombreGlobal = nombre;
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('tb-user').textContent = email;
@@ -1945,8 +1946,15 @@ function navTo(pageId, sbId, el){
   if(pageId === 'flota-sup')    cargarFlotaSup();
   if(pageId === 'unidades-sup'){ unidadesCache=[]; cargarUnidadesTabla('sup'); }
   if(pageId === 'unidades-dir'){ unidadesCache=[]; cargarUnidadesTabla('dir'); }
-  if(pageId === 'dashboard') cargarDashboardCharts();
+  if(pageId === 'dashboard'){
+    setTimeout(cargarDashboardCharts, 300);
+    setTimeout(()=>cargarActividadSesiones('semana'), 600);
+  }
   if(pageId === 'historial') cargarHistorialGeneral();
+  if(pageId === 'focos') cargarFocosRojos();
+  if(pageId === 'hist-unidad') cargarHistorialUnidad();
+  if(pageId === 'ajustes'){ cargarAjustes(); setTimeout(cargarCuentas, 400); }
+  if(pageId === 'ajustes-sup') cargarPerfil();
 }
 function showPage(name){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -2312,10 +2320,21 @@ function resetPasos(){
   document.querySelectorAll('.esp-badge').forEach(b=>b.remove());
   const hint=document.getElementById('sup-nombre-hint');
   if(hint) hint.style.display='none';
-  // Recargar nombre del supervisor desde perfil (readonly para supervisores)
-  if(perfilNombreGlobal && curRole==='supervisor'){
-    const supInput=document.getElementById('a-sup');
-    if(supInput){ supInput.value=perfilNombreGlobal; supInput.readOnly=true; supInput.style.background='var(--verde-tenue)'; if(hint) hint.style.display='block'; }
+  // Recargar nombre desde perfil
+  const supInput=document.getElementById('a-sup');
+  if(supInput && perfilNombreGlobal){
+    supInput.value = perfilNombreGlobal;
+    if(curRole==='supervisor'){
+      supInput.readOnly=true;
+      supInput.style.background='var(--verde-tenue)';
+      supInput.style.cursor='default';
+      if(hint) hint.style.display='block';
+    } else {
+      // Dirección: editable, solo precargar como sugerencia
+      supInput.readOnly=false;
+      supInput.style.background='';
+      supInput.style.cursor='';
+    }
   }
   // Reset variable de odómetro anterior
   ultimoOdoUnidad=0;
@@ -3572,6 +3591,7 @@ async function verificarSesion(){
 
   if(perfil){
     curRole = perfil.rol;
+    if(perfil.nombre) perfilNombreGlobal = perfil.nombre;
     iniciarApp(session.user.email, perfil.rol, perfil.nombre || session.user.email);
   }
 }
@@ -3978,7 +3998,7 @@ async function guardarEditarCuenta(){
   const rol    = document.getElementById('ec-rol').value;
 
   if(!email){ alert('Error: no se identificó la cuenta.'); return; }
-  if(!nombre || nombre.length < 3){ alert('⚠️ El nombre debe tener al menos 3 caracteres.'); return; }
+  if(!nombre || nombre.length < 2){ alert('⚠️ El nombre debe tener al menos 2 caracteres.'); return; }
 
   const { error } = await supa.from('perfiles')
     .update({ nombre, rol })
