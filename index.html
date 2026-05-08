@@ -298,6 +298,12 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
   .stats-grid{grid-template-columns:1fr 1fr;}
   .main{padding:12px;} .tb-user{display:none;}
 }
+
+@media(min-width:900px){
+  .sidebar{transform:translateX(0)!important;}
+  #app{margin-left:var(--sidebar-w);}
+  .overlay{display:none!important;}
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
@@ -338,7 +344,7 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
     <button class="hbtn" id="hbtn" onclick="toggleSB()">
       <div class="hb-l"></div><div class="hb-l"></div><div class="hb-l"></div>
     </button>
-    <div class="tb-logo"><img src="" alt="Bio" onerror="this.style.display='none'"></div>
+    
     <div class="tb-sep"></div>
     <div class="tb-name" onclick="irAInicio()" style="cursor:pointer"><svg width="9" height="9" viewBox="0 0 9 9" style="margin-right:2px;vertical-align:middle;margin-bottom:1px" aria-hidden="true"><ellipse cx="4.5" cy="4.5" rx="4" ry="2.5" fill="#4a8c3f" transform="rotate(-35 4.5 4.5)"/></svg>Bio<span>Combustibles</span> <span style="font-size:10px;font-weight:600;color:var(--gris-claro);letter-spacing:1px">v1.3</span></div>
     <div class="tb-right">
