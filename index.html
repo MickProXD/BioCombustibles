@@ -713,10 +713,28 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
         </div>
       </div>
       <div class="card">
-        <div class="card-title">Actividad reciente</div>
-        <div class="card-sub" style="margin-bottom:14px">Últimos movimientos registrados</div>
-        <div id="tl-dash"><div style="text-align:center;padding:28px;color:var(--text-sub);font-size:13px">Sin actividad registrada aún. Las autorizaciones generadas aparecerán aquí en tiempo real.</div></div>
-      </div>
+          <div class="card-hd" style="margin-bottom:16px">
+            <div>
+              <div class="card-title">Actividad en plataforma</div>
+              <div class="card-sub">Sesiones por hora · Tiempo de uso por supervisor</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn-ghost" style="padding:5px 12px;font-size:12px" id="btn-ses-sem" onclick="cargarActividadSesiones('semana')">Esta semana</button>
+              <button class="btn-ghost" style="padding:5px 12px;font-size:12px" id="btn-ses-mes" onclick="cargarActividadSesiones('mes')">Este mes</button>
+            </div>
+          </div>
+          <div style="height:180px;margin-bottom:16px">
+            <canvas id="chart-sesiones-hora"></canvas>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Supervisor</th><th>Última conexión</th><th>Sesiones hoy</th><th>Tiempo estimado</th><th>Hora pico</th></tr></thead>
+              <tbody id="tbody-sesiones">
+                <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-sub);font-size:12px">Cargando actividad...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
     </div>
     <!-- ══ FOCOS ROJOS ══ -->
     <div class="page" id="page-focos">
@@ -990,7 +1008,7 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
                 <div class="cuenta-role">Supervisor</div>
               </div>
               <div class="cuenta-actions">
-                <button class="btn-icon" onclick="alert('Editar cuenta')">✏️</button>
+                <button class="btn-icon" onclick="abrirEditarCuenta(this.closest('.cuenta-row')?.dataset?.email||'')" style="display:none">✏️</button>
                 <button class="btn-icon del" onclick="confirmarEliminar('supervisor@bioambientalistik.mx')">🗑️</button>
               </div>
             </div>
@@ -1078,7 +1096,7 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
             <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
           </div>
           <div class="btn-row" style="justify-content:flex-start;margin-top:10px">
-            <button class="btn-ghost" onclick="alert('Exportando respaldo completo...')">📥 Exportar respaldo completo</button>
+            <button class="btn-ghost" onclick="exportarRespaldo()">📥 Exportar respaldo completo</button>
           </div>
         </div>
       </div>
@@ -1170,7 +1188,8 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
               <div class="card-sub">Registros de la unidad en el periodo seleccionado</div>
             </div>
           </div>
-          <div class="tbl-wrap">
+          <div id="hu-stats"></div>
+        <div class="tbl-wrap">
             <table>
               <thead>
                 <tr><th>Folio</th><th>Fecha</th><th>Hora</th><th>Estación</th><th>Combustible</th><th>Operador</th><th>Supervisor</th><th>Odóm. ini.</th><th>Estado</th></tr>
@@ -1367,6 +1386,46 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
         👁️ Estás viendo el historial completo — solo visible para Dirección
       </div>
 
+      <!-- V1.3 -->
+      <div class="card" style="border-left:4px solid var(--verde);margin-bottom:20px" id="update-v13">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;color:var(--negro)">v1.3 <span style="color:var(--verde)">"Cadena de Mando"</span></div>
+            <div style="font-size:12px;color:var(--text-sub);margin-top:2px">8 de Mayo de 2026</div>
+          </div>
+          <span style="background:var(--verde);color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px">ACTUAL</span>
+        </div>
+        <div id="updates-dir-v13" style="display:none">
+          <div style="font-size:13px;font-weight:700;color:var(--negro);margin-bottom:8px">Cambios en esta versión:</div>
+          <ul style="font-size:13px;color:var(--text-sub);padding-left:20px;line-height:1.9">
+            <li>Bloqueo duro de odómetro inválido — ya no se puede avanzar con odómetro igual o menor al anterior</li>
+            <li>Litros autorizados obligatorios — el sistema no guarda sin capturar este dato</li>
+            <li>Perfil obligatorio — supervisores sin nombre no pueden generar autorizaciones</li>
+            <li>Nombre precargado automáticamente desde perfil (solo lectura para supervisores)</li>
+            <li>Monitoreo de actividad en plataforma — gráfica de sesiones por hora en Dashboard</li>
+            <li>Gestión de cuentas mejorada — editar nombre, ver desactivadas, audit log</li>
+            <li>Focos rojos funcionales — detecta odómetros repetidos, retrocesos y cargas sin litros</li>
+            <li>Flota/Historial por Unidad funcional con estadísticas</li>
+            <li>Exportar respaldo completo en Excel (4 hojas: autorizaciones, unidades, estaciones, perfiles)</li>
+            <li>Modal de captura de pantalla antes de guardar autorización</li>
+            <li>Carga Especial con datos de estación externa, ticket, RFC y motivo</li>
+            <li>Diseño renovado — más limpio y moderno</li>
+          </ul>
+        </div>
+        <div id="updates-sup-v13">
+          <div style="font-size:13px;font-weight:700;color:var(--negro);margin-bottom:8px">Lo que cambia para ti:</div>
+          <ul style="font-size:13px;color:var(--text-sub);padding-left:20px;line-height:1.9">
+            <li>Tu nombre se carga automáticamente — no tienes que escribirlo</li>
+            <li>Debes capturar los litros autorizados en cada carga (campo obligatorio)</li>
+            <li>El sistema bloquea si el odómetro es igual o menor al anterior — usa la casilla "Sin odómetro" si está averiado</li>
+            <li>Al guardar, el sistema te pide que tomes captura de pantalla para compartirla</li>
+          </ul>
+        </div>
+        <div style="margin-top:14px;padding:10px 14px;background:var(--gris-claro);border-radius:var(--r-sm);font-size:12px;color:var(--text-sub);font-style:italic">
+          🤖 Se desactivó Apollo v0.1 que había comenzado a analizar patrones de comportamiento inusual en las autorizaciones de combustible, cruzando odómetros, horarios y ubicaciones GPS de los supervisores en tiempo real. El reporte preliminar fue archivado en el servidor central de BioAmbientalistik. Se reactivará en la próxima versión con análisis completo.
+        </div>
+      </div>
+
       <!-- V1.2 -->
       <div class="card" style="border-left:4px solid var(--verde);margin-bottom:20px" id="update-v12">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
@@ -1528,67 +1587,7 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
       </div>
     </div>
 
-    <!-- ══ UNIDADES SUPERVISOR ══ -->
-    <div class="page" id="page-unidades-sup">
-      <div class="pg-hd">
-        <div class="pg-title">🚛 Unidades</div>
-        <div class="pg-sub">Consulta y edita datos básicos de cada unidad. No puedes eliminar unidades.</div>
-      </div>
-      <div class="card">
-        <div class="card-hd">
-          <div>
-            <div class="card-title">Flota registrada</div>
-            <div class="card-sub">Toca una unidad para ver su detalle y editar placas o chofer</div>
-          </div>
-          <input class="inp" type="text" id="buscar-unidad-sup" placeholder="Buscar por número o placas..." style="margin:0;max-width:220px;padding:8px 12px" oninput="filtrarUnidades('sup')">
-        </div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>N° Eco</th><th>Placas</th><th>Combustible</th><th>Último chofer</th><th>Odóm. registrado</th><th>Acción</th></tr></thead>
-            <tbody id="tbody-unidades-sup">
-              <tr><td colspan="6" style="text-align:center;padding:28px;color:var(--text-sub)">Cargando unidades...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
 
-    <!-- ══ UNIDADES DIRECCIÓN ══ -->
-    <div class="page" id="page-unidades-dir">
-      <div class="pg-hd">
-        <div class="pg-title">🚛 Unidades</div>
-        <div class="pg-sub">Gestión completa de la flota. Solo Dirección puede eliminar unidades y editar odómetros con contraseña.</div>
-      </div>
-
-      <!-- Leyenda análisis rendimiento -->
-      <div class="card" style="background:var(--verde-tenue);border:1.5px solid var(--verde-tenue2)">
-        <div style="display:flex;align-items:flex-start;gap:12px">
-          <span style="font-size:22px">📊</span>
-          <div>
-            <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;color:var(--verde)">Próximo análisis de rendimiento sugerido</div>
-            <div style="font-size:13px;color:var(--text);margin-top:4px" id="lbl-prox-analisis">Se requieren al menos 30 días de registros completos para resultados confiables. Fecha sugerida: <strong>14 de mayo de 2026</strong>.</div>
-            <div style="font-size:11px;color:var(--text-sub);margin-top:4px">Esta fecha se recalcula automáticamente conforme avanza la operación.</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-hd">
-          <div>
-            <div class="card-title">Flota completa</div>
-          </div>
-          <input class="inp" type="text" id="buscar-unidad-dir" placeholder="Buscar..." style="margin:0;max-width:200px;padding:8px 12px" oninput="filtrarUnidades('dir')">
-        </div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>N° Eco</th><th>Placas</th><th>Combustible</th><th>Último chofer</th><th>Odóm. registrado</th><th>Acciones</th></tr></thead>
-            <tbody id="tbody-unidades-dir">
-              <tr><td colspan="6" style="text-align:center;padding:28px;color:var(--text-sub)">Cargando unidades...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
 
     <!-- ══ DETALLE AUTORIZACIÓN (DIRECCIÓN) ══ -->
     <div class="page" id="page-detalle-aut">
@@ -1973,6 +1972,15 @@ function irPaso(n){
   if(n===3){
     if(!document.getElementById('a-unidad').value){ alert('⚠️ Selecciona una unidad.'); return; }
     if(!document.getElementById('a-op').value.trim()){ alert('⚠️ Escribe el nombre del operador.'); return; }
+    // Bloqueo duro de odómetro
+    const odoNaEl = document.getElementById('a-odo-na');
+    if(!odoNaEl?.checked){
+      const odoVal = parseInt(document.getElementById('a-odo')?.value||'0');
+      if(ultimoOdoUnidad > 0 && odoVal > 0 && odoVal <= ultimoOdoUnidad){
+        alert('🔴 No puedes avanzar: el odómetro ('+odoVal.toLocaleString('es-MX')+' km) es igual o menor al último registrado ('+ultimoOdoUnidad.toLocaleString('es-MX')+' km).\n\nCorrige la lectura o activa "Odómetro no disponible".');
+        return;
+      }
+    }
     if(!document.getElementById('a-odo').value){ alert('⚠️ Ingresa la lectura del odómetro.'); return; }
     buildPreview();
   }
@@ -2097,6 +2105,8 @@ function guardarAut(){
   // Validaciones defensivas antes de guardar
   if(!ds.sup || ds.sup.length < 3){ alert('⚠️ El nombre del supervisor debe tener al menos 3 caracteres.'); return; }
   if(!ds.op  || ds.op.length  < 3){ alert('⚠️ El nombre del operador debe tener al menos 3 caracteres.'); return; }
+  if(!ds.litros || parseInt(ds.litros) <= 0){ alert('⚠️ Debes capturar los litros autorizados antes de guardar.'); return; }
+  if(parseInt(ds.litros) > 500){ alert('⚠️ Los litros autorizados no pueden exceder 500 L. Verifica la cantidad.'); return; }
   if(!ds.odo_na){
     if(!ds.odo || parseInt(ds.odo) <= 0){ alert('⚠️ El odómetro debe ser un número positivo válido, o marca "Odómetro no disponible".'); return; }
     if(parseInt(ds.odo) > 9999999){ alert('⚠️ El odómetro parece tener demasiados dígitos. Verifica.'); return; }
@@ -2274,16 +2284,41 @@ function resetPasos(){
     if(sc) sc.className='step-c'+(i===1?' act':'');
     if(sn) sn.className='step-n'+(i===1?' act':'');
   });
-  // Limpiar foto del odómetro (campo archivo + vista previa)
-  const fi = document.getElementById('foto-odometro');
-  const fp = document.getElementById('foto-preview');
-  const ft = document.getElementById('foto-txt');
+  // Limpiar todos los campos del formulario
+  ['a-sup','a-op','a-odo','a-litros'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){ el.value=''; el.style.borderColor=''; el.readOnly=false; el.style.opacity=''; }
+  });
+  const unidSel = document.getElementById('a-unidad');
+  if(unidSel) unidSel.selectedIndex=0;
+  // Limpiar foto del odómetro
+  const fi=document.getElementById('foto-odometro');
+  const fp=document.getElementById('foto-preview');
+  const ft=document.getElementById('foto-txt');
   if(fi) fi.value='';
   if(fp){ fp.src=''; fp.style.display='none'; }
   if(ft) ft.textContent='Toca para subir foto del odómetro';
   // Ocultar warning de odómetro
-  const ow = document.getElementById('odo-warn');
+  const ow=document.getElementById('odo-warn');
   if(ow) ow.style.display='none';
+  // Limpiar checkbox odómetro no disponible
+  const odoNaEl=document.getElementById('a-odo-na');
+  if(odoNaEl){ odoNaEl.checked=false; toggleOdoNA(odoNaEl); }
+  // Limpiar carga especial
+  const espToggle=document.getElementById('toggle-especial');
+  if(espToggle){ espToggle.checked=false; toggleCargaEspecial(espToggle); }
+  esCargaEspecial=false;
+  // Limpiar badges y hints
+  document.querySelectorAll('.esp-badge').forEach(b=>b.remove());
+  const hint=document.getElementById('sup-nombre-hint');
+  if(hint) hint.style.display='none';
+  // Recargar nombre del supervisor desde perfil (readonly para supervisores)
+  if(perfilNombreGlobal && curRole==='supervisor'){
+    const supInput=document.getElementById('a-sup');
+    if(supInput){ supInput.value=perfilNombreGlobal; supInput.readOnly=true; supInput.style.background='var(--verde-tenue)'; if(hint) hint.style.display='block'; }
+  }
+  // Reset variable de odómetro anterior
+  ultimoOdoUnidad=0;
 }
 
 // ════════════ MODAL ESTACIÓN ════════════
@@ -2387,7 +2422,27 @@ async function crearCuenta(){
   alert(confirmMsg);
 }
 
-function agregarFilaCuenta(email, role, nombre, userId){
+async function cargarCuentas(){
+  const lista = document.getElementById('lista-cuentas');
+  if(!lista) return;
+  lista.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-sub);font-size:13px">Cargando cuentas...</div>';
+
+  const { data, error } = await supa.from('perfiles')
+    .select('id,email,nombre,rol,activo,created_at')
+    .order('created_at', { ascending: true });
+
+  if(error || !data){
+    lista.innerHTML = '<div style="color:var(--rojo);padding:12px">Error al cargar cuentas.</div>';
+    return;
+  }
+
+  lista.innerHTML = '';
+  data.forEach(u => {
+    agregarFilaCuenta(u.email, u.rol, u.nombre, u.id, !u.activo);
+  });
+}
+
+function agregarFilaCuenta(email, role, nombre, userId, desactivada){
   const lista = document.getElementById('lista-cuentas');
   if(!lista) return;
   const div = document.createElement('div');
@@ -2395,15 +2450,17 @@ function agregarFilaCuenta(email, role, nombre, userId){
   div.id = 'cuenta-'+btoa(email);
   div.setAttribute('data-uid', userId || '');
   const nombreShow = nombre || '<span style="color:var(--amarillo);font-size:11px">Sin nombre — pendiente</span>';
+  const desactivadaStyle = desactivada ? 'opacity:0.5;' : '';
+  const desactivadaBadge = desactivada ? '<span style="background:#fdecea;color:var(--rojo);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px">DESACTIVADA</span>' : '';
   div.innerHTML = `
-    <div class="cuenta-info">
-      <div class="cuenta-email">${email}</div>
+    <div class="cuenta-info" style="${desactivadaStyle}">
+      <div class="cuenta-email">${email}${desactivadaBadge}</div>
       <div style="font-size:12px;color:var(--text-sub);margin-top:2px">${typeof nombreShow==='string'&&nombreShow.includes('<')?nombreShow:nombreShow}</div>
       <div class="cuenta-role">${role==='supervisor'?'Supervisor':'Dirección'}</div>
     </div>
     <div class="cuenta-actions">
-      <button class="btn-icon" onclick="abrirEditarCuenta('${email}','${nombre||''}','${role}')">✏️</button>
-      <button class="btn-icon del" onclick="confirmarEliminar('${email}')">🗑️</button>
+      ${!desactivada ? `<button class="btn-icon" onclick="abrirEditarCuenta('${email}','${nombre||''}','${role}')">✏️</button>` : ''}
+      <button class="btn-icon del" onclick="confirmarEliminar('${email}')">${desactivada?'🔄':'🗑️'}</button>
     </div>`;
   lista.appendChild(div);
 }
@@ -2824,7 +2881,7 @@ async function cargarFlotaSup(){
 let flotaSupCache = [];
 // ════════════ HISTORIAL POR UNIDAD (FLOTA DIRECCIÓN) ════════════
 async function cargarHistorialUnidad(){
-  const sel = document.getElementById('hu-unidad');
+  const sel = document.getElementById('hu-selector') || document.getElementById('hu-unidad');
   const per = document.getElementById('hu-periodo');
   if(!sel || !per) return;
 
@@ -2858,8 +2915,8 @@ async function cargarHistorialUnidad(){
   fechaIni.setDate(ahora.getDate() - parseInt(periodo));
   const fechaIniISO = fechaIni.toISOString().split('T')[0];
 
-  const tbody = document.getElementById('tbody-hist-unidad');
-  const stats  = document.getElementById('stats-hist-unidad');
+  const tbody = document.getElementById('hu-tbody') || document.getElementById('tbody-hist-unidad');
+  const stats = document.getElementById('stats-hist-unidad') || document.getElementById('hu-stats');
   if(tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-sub)">Cargando...</td></tr>';
 
   const { data, error } = await supa.from('autorizaciones')
@@ -3288,10 +3345,18 @@ function configurarUpdates(rol){
     if(dirView) dirView.style.display = 'block';
     if(supView) supView.style.display = 'none';
     if(dirNote) dirNote.style.display = 'block';
+    const dv13 = document.getElementById('updates-dir-v13');
+    const sv13 = document.getElementById('updates-sup-v13');
+    if(dv13) dv13.style.display = 'block';
+    if(sv13) sv13.style.display = 'none';
   } else {
     if(dirView) dirView.style.display = 'none';
     if(supView) supView.style.display = 'block';
     if(dirNote) dirNote.style.display = 'none';
+    const dv13 = document.getElementById('updates-dir-v13');
+    const sv13 = document.getElementById('updates-sup-v13');
+    if(dv13) dv13.style.display = 'none';
+    if(sv13) sv13.style.display = 'block';
   }
 }
 
