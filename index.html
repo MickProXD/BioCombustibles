@@ -2409,12 +2409,33 @@ function agregarFilaCuenta(email, role, nombre, userId){
 }
 
 async function confirmarEliminar(email){
-  if(!confirm('¿Desactivar la cuenta '+email+'?')) return;
+  const motivo = prompt('¿Por qué se elimina la cuenta '+email+'?\n\n(Requerido para auditoría — mínimo 10 caracteres)');
+  if(!motivo || motivo.trim().length < 10){
+    alert('⚠️ Debes escribir el motivo de eliminación para continuar.');
+    return;
+  }
+  if(!confirm('¿Confirmas desactivar la cuenta '+email+'?\n\nEsta cuenta no podrá iniciar sesión. El historial de autorizaciones se conserva.')) return;
+
+  // Desactivar en perfiles
   const { error } = await supa.from('perfiles').update({activo:false}).eq('email',email);
   if(error){ alert('Error: '+error.message); return; }
+
+  // Registrar en audit_log
+  try {
+    const { data: { session } } = await supa.auth.getSession();
+    await supa.from('audit_log').insert({
+      accion: 'DESACTIVAR_CUENTA',
+      tabla: 'perfiles',
+      registro_id: email,
+      detalle: 'Cuenta desactivada. Motivo: '+motivo,
+      usuario_id: session?.user?.id || null,
+      usuario_email: session?.user?.email || 'desconocido'
+    });
+  } catch(e){ console.warn('audit_log error:', e); }
+
   const el = document.getElementById('cuenta-'+btoa(email));
   if(el) el.remove();
-  alert('✅ Cuenta desactivada: '+email);
+  alert('✅ Cuenta desactivada correctamente.\n\nEl supervisor '+email+' ya no podrá iniciar sesión.');
 }
 
 function cerrarModal(id){
@@ -2801,6 +2822,92 @@ async function cargarFlotaSup(){
 }
 
 let flotaSupCache = [];
+// ════════════ HISTORIAL POR UNIDAD (FLOTA DIRECCIÓN) ════════════
+async function cargarHistorialUnidad(){
+  const sel = document.getElementById('hu-unidad');
+  const per = document.getElementById('hu-periodo');
+  if(!sel || !per) return;
+
+  // Poblar select si está vacío
+  if(sel.options.length <= 1){
+    const { data: uns } = await supa.from('unidades')
+      .select('id,numero_eco,placas,combustible')
+      .eq('activa',true).order('numero_eco');
+    if(uns){
+      sel.innerHTML = '<option value="">— Selecciona una unidad —</option>';
+      uns.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.id+'|'+u.numero_eco+'|'+u.placas+'|'+u.combustible;
+        opt.textContent = u.numero_eco+' | '+u.placas;
+        sel.appendChild(opt);
+      });
+    }
+  }
+
+  const val = sel.value;
+  if(!val) return;
+  const parts = val.split('|');
+  const unidId = parseInt(parts[0]);
+  const eco    = parts[1] || '—';
+  const placas = parts[2] || '—';
+
+  // Determinar rango de fechas
+  const ahora = new Date();
+  let fechaIni = new Date(ahora);
+  const periodo = per.value || '30';
+  fechaIni.setDate(ahora.getDate() - parseInt(periodo));
+  const fechaIniISO = fechaIni.toISOString().split('T')[0];
+
+  const tbody = document.getElementById('tbody-hist-unidad');
+  const stats  = document.getElementById('stats-hist-unidad');
+  if(tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-sub)">Cargando...</td></tr>';
+
+  const { data, error } = await supa.from('autorizaciones')
+    .select('folio,fecha,hora,operador,supervisor,odometro_ini,litros_autorizados,odo_no_disponible,estaciones(nombre)')
+    .eq('unidad_id', unidId)
+    .gte('fecha', fechaIniISO)
+    .order('fecha',{ascending:false});
+
+  if(error || !data){
+    if(tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--rojo)">Error al cargar datos.</td></tr>';
+    return;
+  }
+
+  // Estadísticas
+  const totalLitros = data.reduce((s,r) => s+(r.litros_autorizados||0), 0);
+  const totalCargas = data.length;
+  if(stats) stats.innerHTML = `
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+      <div class="stat-mini" style="background:var(--verde-tenue);border-radius:8px;padding:10px 16px;flex:1;min-width:100px;text-align:center">
+        <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;color:var(--verde)">${totalCargas}</div>
+        <div style="font-size:11px;color:var(--text-sub)">Cargas totales</div>
+      </div>
+      <div class="stat-mini" style="background:var(--verde-tenue);border-radius:8px;padding:10px 16px;flex:1;min-width:100px;text-align:center">
+        <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;color:var(--verde)">${totalLitros.toLocaleString('es-MX')} L</div>
+        <div style="font-size:11px;color:var(--text-sub)">Litros totales</div>
+      </div>
+      <div class="stat-mini" style="background:var(--verde-tenue);border-radius:8px;padding:10px 16px;flex:1;min-width:100px;text-align:center">
+        <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;color:var(--verde)">${totalCargas > 0 ? Math.round(totalLitros/totalCargas) : 0} L</div>
+        <div style="font-size:11px;color:var(--text-sub)">Promedio/carga</div>
+      </div>
+    </div>`;
+
+  if(tbody){
+    tbody.innerHTML = data.length === 0
+      ? '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-sub)">Sin cargas en el período seleccionado.</td></tr>'
+      : data.map(r => `<tr>
+          <td>${r.folio}</td>
+          <td>${r.fecha}</td>
+          <td>${(r.hora||'').slice(0,5)||'—'}</td>
+          <td>${r.estaciones?.nombre||'—'}</td>
+          <td>${r.operador||'—'}</td>
+          <td>${r.supervisor||'—'}</td>
+          <td style="text-align:center;font-weight:700;color:var(--verde)">${r.odo_no_disponible?'<span style="color:var(--amarillo)">Sin odóm.</span>':(r.odometro_ini||0).toLocaleString('es-MX')+' km'}</td>
+          <td style="text-align:center;font-weight:700;color:var(--verde)">${r.litros_autorizados ? r.litros_autorizados+' L' : '—'}</td>
+        </tr>`).join('');
+  }
+}
+
 function filtrarFlotaSup(){
   const q = document.getElementById('buscar-flota-sup')?.value?.toLowerCase() || '';
   document.querySelectorAll('#tbody-flota-sup tr').forEach(row => {
@@ -3430,6 +3537,118 @@ function irAInicio(){
   closeSB();
 }
 
+// ════════════ FOCOS ROJOS ════════════
+async function cargarFocosRojos(){
+  const container = document.getElementById('focos-container');
+  if(!container) return;
+  container.innerHTML = '<div style="text-align:center;padding:28px;color:var(--text-sub)">Analizando datos...</div>';
+
+  // Traer todas las autorizaciones ordenadas por unidad y fecha
+  const { data, error } = await supa.from('autorizaciones')
+    .select('id,folio,fecha,hora,operador,supervisor,odometro_ini,litros_autorizados,odo_no_disponible,unidades(numero_eco,placas,combustible),estaciones(nombre)')
+    .order('unidad_id').order('created_at',{ascending:true});
+
+  if(error || !data){ container.innerHTML = '<div style="text-align:center;padding:28px;color:var(--rojo)">Error al cargar datos.</div>'; return; }
+
+  const alertas = [];
+
+  // ── Detectar odómetros repetidos o retrocesos ──
+  const odoMap = {};
+  data.forEach(r => {
+    const eco = r.unidades?.numero_eco || '—';
+    const odo = r.odometro_ini;
+    if(!r.odo_no_disponible && odo > 0){
+      if(odoMap[eco] !== undefined){
+        const diff = odo - odoMap[eco];
+        if(diff <= 0){
+          alertas.push({
+            tipo: diff === 0 ? '🟡 Odómetro repetido' : '🔴 Retroceso de odómetro',
+            color: diff === 0 ? 'var(--amarillo)' : 'var(--rojo)',
+            bg: diff === 0 ? 'var(--amarillo-t)' : 'var(--rojo-t,#fdecea)',
+            folio: r.folio, fecha: r.fecha,
+            unidad: eco, placas: r.unidades?.placas||'—',
+            operador: r.operador, supervisor: r.supervisor,
+            detalle: diff === 0
+              ? 'Odómetro '+odo.toLocaleString('es-MX')+' km — igual al registro anterior'
+              : 'Odómetro actual '+odo.toLocaleString('es-MX')+' km — anterior era '+(odoMap[eco]).toLocaleString('es-MX')+' km (retroceso de '+Math.abs(diff).toLocaleString('es-MX')+' km)'
+          });
+        } else if(diff > 50000){
+          alertas.push({
+            tipo: '⚠️ Salto de odómetro sospechoso',
+            color: 'var(--amarillo)', bg: 'var(--amarillo-t)',
+            folio: r.folio, fecha: r.fecha,
+            unidad: eco, placas: r.unidades?.placas||'—',
+            operador: r.operador, supervisor: r.supervisor,
+            detalle: 'Salto de '+diff.toLocaleString('es-MX')+' km en un día — posible error de captura'
+          });
+        }
+      }
+      odoMap[eco] = odo;
+    }
+  });
+
+  // ── Detectar cargas sin litros ──
+  data.forEach(r => {
+    if(!r.litros_autorizados && !r.odo_no_disponible){
+      alertas.push({
+        tipo: '🟡 Carga sin litros registrados',
+        color: 'var(--amarillo)', bg: 'var(--amarillo-t)',
+        folio: r.folio, fecha: r.fecha,
+        unidad: r.unidades?.numero_eco||'—', placas: r.unidades?.placas||'—',
+        operador: r.operador, supervisor: r.supervisor,
+        detalle: 'La autorización no tiene litros capturados'
+      });
+    }
+  });
+
+  // ── Renderizar ──
+  if(alertas.length === 0){
+    container.innerHTML = `
+      <div style="text-align:center;padding:48px 20px;color:var(--text-sub)">
+        <div style="font-size:40px;margin-bottom:12px">✅</div>
+        <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;color:var(--verde)">Sin focos rojos activos</div>
+        <div style="font-size:13px;margin-top:6px">No se detectaron irregularidades en los datos registrados.</div>
+      </div>`;
+    return;
+  }
+
+  const criticos = alertas.filter(a=>a.tipo.startsWith('🔴'));
+  const medios   = alertas.filter(a=>a.tipo.startsWith('⚠️'));
+  const menores  = alertas.filter(a=>a.tipo.startsWith('🟡'));
+
+  container.innerHTML = `
+    <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+      <div style="background:var(--rojo-t,#fdecea);border:1.5px solid var(--rojo);border-radius:8px;padding:10px 16px;flex:1;min-width:120px;text-align:center">
+        <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:28px;color:var(--rojo)">${criticos.length}</div>
+        <div style="font-size:11px;color:var(--rojo);font-weight:700">CRÍTICOS</div>
+      </div>
+      <div style="background:var(--amarillo-t);border:1.5px solid var(--amarillo);border-radius:8px;padding:10px 16px;flex:1;min-width:120px;text-align:center">
+        <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:28px;color:var(--amarillo)">${medios.length}</div>
+        <div style="font-size:11px;color:var(--amarillo);font-weight:700">ADVERTENCIAS</div>
+      </div>
+      <div style="background:var(--amarillo-t);border:1.5px solid var(--amarillo);border-radius:8px;padding:10px 16px;flex:1;min-width:120px;text-align:center">
+        <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:28px;color:var(--amarillo)">${menores.length}</div>
+        <div style="font-size:11px;color:var(--amarillo);font-weight:700">MENORES</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${alertas.map(a=>`
+        <div style="border:1.5px solid ${a.color};background:${a.bg};border-radius:8px;padding:12px 14px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
+            <div>
+              <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;color:${a.color}">${a.tipo}</div>
+              <div style="font-size:12px;color:var(--text-sub);margin-top:2px">${a.detalle}</div>
+            </div>
+            <div style="text-align:right;font-size:11px;color:var(--text-sub);white-space:nowrap">
+              <div style="font-weight:700;color:var(--negro)">${a.unidad} · ${a.placas}</div>
+              <div>${a.fecha} · ${a.folio}</div>
+              <div>${a.supervisor}</div>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
 // ════════════ ACTIVIDAD DE SESIONES EN DASHBOARD ════════════
 let chartSesiones = null;
 
@@ -3539,6 +3758,36 @@ async function cargarActividadSesiones(periodo = 'semana'){
       </tr>`;
     });
     tbody.innerHTML = filas.join('') || '<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--text-sub)">Sin actividad en el período seleccionado.</td></tr>';
+  }
+}
+
+// ════════════ EXPORTAR RESPALDO COMPLETO ════════════
+async function exportarRespaldo(){
+  const btn = document.querySelector('[onclick="exportarRespaldo()"]');
+  if(btn){ btn.textContent='⏳ Generando respaldo...'; btn.disabled=true; }
+
+  try {
+    // Traer todas las tablas
+    const [autRes, unidRes, estRes, perfilRes] = await Promise.all([
+      supa.from('autorizaciones').select('*').order('created_at',{ascending:true}),
+      supa.from('unidades').select('*').order('numero_eco'),
+      supa.from('estaciones').select('*').order('id'),
+      supa.from('perfiles').select('id,email,nombre,rol,activo,puesto,telefono,created_at').order('created_at'),
+    ]);
+
+    const wb = XLSX.utils.book_new();
+
+    if(autRes.data) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(autRes.data), 'Autorizaciones');
+    if(unidRes.data) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(unidRes.data), 'Unidades');
+    if(estRes.data)  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(estRes.data),  'Estaciones');
+    if(perfilRes.data) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(perfilRes.data), 'Perfiles');
+
+    const fecha = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, 'BioCombustibles_Respaldo_'+fecha+'.xlsx');
+  } catch(err){
+    alert('Error al exportar: '+err.message);
+  } finally {
+    if(btn){ btn.textContent='📥 Exportar respaldo completo'; btn.disabled=false; }
   }
 }
 
