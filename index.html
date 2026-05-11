@@ -1740,6 +1740,29 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
   </div>
 </div>
 
+<!-- ══ MODAL ODÓMETRO ALERTA ══ -->
+<div id="modal-odo-alerta" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:16px;max-width:460px;width:100%;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="background:#fdecea;border-radius:10px;padding:10px;flex-shrink:0;font-size:24px">🚨</div>
+      <div id="odo-alerta-titulo" style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;color:var(--rojo)"></div>
+    </div>
+    <div id="odo-alerta-msg" style="font-size:14px;color:var(--text);margin-bottom:10px;font-weight:600;line-height:1.5"></div>
+    <div id="odo-alerta-sub" style="font-size:13px;color:var(--text-sub);line-height:1.6;margin-bottom:20px"></div>
+    <div style="background:#fff8e7;border:1px solid #e8a000;border-radius:8px;padding:12px 14px;margin-bottom:20px">
+      <div style="font-size:12px;color:#c97d10;font-weight:700;margin-bottom:4px">Acciones disponibles:</div>
+      <div style="font-size:12px;color:var(--text-sub);line-height:1.7">
+        • Regresa y corrige el odómetro con la lectura real del vehículo<br>
+        • Si el odómetro está averiado, activa la casilla <strong>"Odómetro no disponible"</strong><br>
+        • No se puede continuar sin resolver esta incongruencia
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end">
+      <button onclick="cerrarModalOdoAlerta()" style="background:var(--rojo);color:#fff;border:none;border-radius:8px;padding:10px 24px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer">Entendido — corregir →</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODAL UPDATES SUPERVISOR ══ -->
 <div id="modal-updates-sup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center;padding:20px">
   <div style="background:#fff;border-radius:16px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden">
@@ -2012,6 +2035,7 @@ function navTo(pageId, sbId, el){
   if(pageId === 'dashboard'){
     setTimeout(cargarDashboardCharts, 300);
     setTimeout(()=>cargarActividadSesiones('semana'), 600);
+    setTimeout(cargarFocosRojos, 800); // actualiza KPI de focos en dashboard
   }
   if(pageId === 'historial') cargarHistorialGeneral();
   if(pageId === 'focos') cargarFocosRojos();
@@ -2047,9 +2071,21 @@ function irPaso(n){
     const odoNaEl = document.getElementById('a-odo-na');
     if(!odoNaEl?.checked){
       const odoVal = parseInt(document.getElementById('a-odo')?.value||'0');
-      if(ultimoOdoUnidad > 0 && odoVal > 0 && odoVal <= ultimoOdoUnidad){
-        alert('🔴 No puedes avanzar: el odómetro ('+odoVal.toLocaleString('es-MX')+' km) es igual o menor al último registrado ('+ultimoOdoUnidad.toLocaleString('es-MX')+' km).\n\nCorrige la lectura o activa "Odómetro no disponible".');
-        return;
+      if(ultimoOdoUnidad > 0 && odoVal > 0){
+        if(odoVal === ultimoOdoUnidad){
+          mostrarModalOdoAlerta('repetido', odoVal, ultimoOdoUnidad);
+          return;
+        }
+        if(odoVal < ultimoOdoUnidad){
+          mostrarModalOdoAlerta('menor', odoVal, ultimoOdoUnidad);
+          return;
+        }
+        if((odoVal - ultimoOdoUnidad) > 50000){
+          if(!confirm('⚠️ El odómetro registra un salto de '+(odoVal-ultimoOdoUnidad).toLocaleString('es-MX')+' km respecto al último registrado.
+
+¿Es correcto este valor? Verifica que no hayas ingresado un dígito de más.'))
+            return;
+        }
       }
     }
     if(!document.getElementById('a-odo').value){ alert('⚠️ Ingresa la lectura del odómetro.'); return; }
@@ -2155,6 +2191,30 @@ function buildPreview(){
   } else {
     document.getElementById('aut-preview').dataset.especial = '';
   }
+}
+
+// ════════════ MODAL ODÓMETRO ALERTA ════════════
+function mostrarModalOdoAlerta(tipo, valorActual, valorAnterior){
+  const m = document.getElementById('modal-odo-alerta');
+  if(!m) return;
+  const titulo = document.getElementById('odo-alerta-titulo');
+  const msg    = document.getElementById('odo-alerta-msg');
+  const sub    = document.getElementById('odo-alerta-sub');
+
+  if(tipo === 'repetido'){
+    titulo.textContent = '⚠️ Odómetro repetido';
+    msg.textContent = 'Estás registrando el mismo odómetro ('+valorActual.toLocaleString('es-MX')+' km) que en la última autorización de esta unidad.';
+    sub.textContent = 'Si el odómetro del vehículo no funciona, activa la casilla 'Odómetro no disponible' en el formulario antes de continuar. No repitas el mismo número.';
+  } else {
+    titulo.textContent = '🔴 Odómetro menor al anterior';
+    msg.textContent = 'El odómetro que ingresaste ('+valorActual.toLocaleString('es-MX')+' km) es MENOR al último registrado para esta unidad ('+valorAnterior.toLocaleString('es-MX')+' km).';
+    sub.textContent = 'Esto es una incongruencia operativa. Verifica la lectura real del odómetro. Si el odómetro está averiado, activa la casilla 'Odómetro no disponible'.';
+  }
+  m.style.display = 'flex';
+}
+function cerrarModalOdoAlerta(){
+  const m = document.getElementById('modal-odo-alerta');
+  if(m) m.style.display = 'none';
 }
 
 // ════════════ MODAL CAPTURA DE PANTALLA ════════════
@@ -3750,6 +3810,15 @@ async function cargarFocosRojos(){
   });
 
   // ── Renderizar ──
+  // Actualizar KPI del dashboard con solo críticos
+  const elFocosKpi = document.getElementById('dash-focos');
+  if(elFocosKpi){
+    const criticos_count = alertas.filter(a=>a.tipo.startsWith('🔴')).length;
+    elFocosKpi.textContent = criticos_count;
+    // Color rojo si hay críticos
+    elFocosKpi.style.color = criticos_count > 0 ? 'var(--rojo)' : 'var(--verde)';
+  }
+
   if(alertas.length === 0){
     container.innerHTML = `
       <div style="text-align:center;padding:48px 20px;color:var(--text-sub)">
