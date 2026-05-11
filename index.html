@@ -2081,9 +2081,7 @@ function irPaso(n){
           return;
         }
         if((odoVal - ultimoOdoUnidad) > 50000){
-          if(!confirm("⚠️ El odómetro registra un salto de " + (odoVal-ultimoOdoUnidad).toLocaleString("es-MX")+' km respecto al último registrado.
-
-¿Es correcto este valor? Verifica que no hayas ingresado un dígito de más.'))
+          if(!confirm("⚠️ El odómetro registra un salto de " + (odoVal-ultimoOdoUnidad).toLocaleString("es-MX") + " km respecto al último registrado. ¿Es correcto este valor? Verifica que no hayas ingresado un dígito de más."))
             return;
         }
       }
@@ -2204,11 +2202,11 @@ function mostrarModalOdoAlerta(tipo, valorActual, valorAnterior){
   if(tipo === 'repetido'){
     titulo.textContent = '⚠️ Odómetro repetido';
     msg.textContent = 'Estás registrando el mismo odómetro ('+valorActual.toLocaleString('es-MX')+' km) que en la última autorización de esta unidad.';
-    sub.textContent = 'Si el odómetro del vehículo no funciona, activa la casilla 'Odómetro no disponible' en el formulario antes de continuar. No repitas el mismo número.';
+    sub.textContent = "Si el odómetro del vehículo no funciona, activa la casilla \"Odómetro no disponible\" en el formulario antes de continuar. No repitas el mismo número.";
   } else {
     titulo.textContent = '🔴 Odómetro menor al anterior';
     msg.textContent = 'El odómetro que ingresaste ('+valorActual.toLocaleString('es-MX')+' km) es MENOR al último registrado para esta unidad ('+valorAnterior.toLocaleString('es-MX')+' km).';
-    sub.textContent = 'Esto es una incongruencia operativa. Verifica la lectura real del odómetro. Si el odómetro está averiado, activa la casilla 'Odómetro no disponible'.';
+    sub.textContent = "Esto es una incongruencia operativa. Verifica la lectura real del odómetro. Si el odómetro está averiado, activa la casilla \"Odómetro no disponible\".";
   }
   m.style.display = 'flex';
 }
