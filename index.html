@@ -304,10 +304,20 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
   .main{padding:12px;} .tb-user{display:none;}
 }
 
-@media(min-width:900px){
-  .sidebar{transform:translateX(0)!important;}
-  #app{margin-left:var(--sidebar-w);}
-  .overlay{display:none!important;}
+
+/* ── RESPONSIVE: Desktop sidebar fijo, móvil hamburguesa ── */
+@media (min-width: 900px) {
+  .sidebar { transform: translateX(0) !important; }
+  .hbtn { display: none !important; }
+  .sb-overlay { display: none !important; }
+  .main-wrap { margin-left: var(--sidebar-w) !important; }
+  #app.has-sidebar { margin-left: var(--sidebar-w) !important; }
+}
+@media (max-width: 899px) {
+  .main-wrap { margin-left: 0 !important; }
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .sb-overlay.open { background: rgba(0,0,0,.35); pointer-events: all; }
 }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" crossorigin="anonymous"></script>
@@ -1973,19 +1983,20 @@ async function doLogout(){
 
 // ════════════ SIDEBAR ════════════
 function toggleSB(){ sbOpen ? closeSB() : openSB(); }
-function openSB(){
-  sbOpen = true;
-  document.getElementById('hbtn').classList.add('open');
-  document.getElementById('overlay').classList.add('vis');
-  const id = curRole === 'supervisor' ? 'sb-sup' : 'sb-dir';
-  document.getElementById(id).classList.add('open');
-}
+
 function closeSB(){
   sbOpen = false;
   document.getElementById('hbtn').classList.remove('open');
   document.getElementById('overlay').classList.remove('vis');
   document.getElementById('sb-sup').classList.remove('open');
   document.getElementById('sb-dir').classList.remove('open');
+}
+function openSB(){
+  sbOpen = true;
+  document.getElementById('hbtn').classList.add('open');
+  document.getElementById('overlay').classList.add('vis');
+  const id = curRole === 'supervisor' ? 'sb-sup' : 'sb-dir';
+  document.getElementById(id).classList.add('open');
 }
 function navTo(pageId, sbId, el){
   showPage(pageId);
@@ -4093,6 +4104,12 @@ async function guardarEditarCuenta(){
   cargarCuentas();
   alert('✅ Cuenta actualizada correctamente.\n'+email+' → '+nombre);
 }
+
+// Overlay del sidebar cierra al hacer click
+document.addEventListener('DOMContentLoaded', () => {
+  const ov = document.getElementById('overlay');
+  if(ov) ov.addEventListener('click', () => closeSB());
+});
 
 // close modals on overlay click
 document.querySelectorAll('.modal-bg').forEach(m=>{
