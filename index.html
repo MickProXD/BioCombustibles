@@ -2023,8 +2023,18 @@ function openSB(){
 }
 function navTo(pageId, sbId, el){
   showPage(pageId);
-  document.querySelectorAll('#'+sbId+' .sb-item').forEach(i=>i.classList.remove('active'));
-  el.classList.add('active');
+  if(sbId){
+    document.querySelectorAll('#'+sbId+' .sb-item').forEach(i=>i.classList.remove('active'));
+  }
+  if(el && el.classList){
+    el.classList.add('active');
+  } else if(sbId){
+    // Si no se pasó el elemento, buscar el item activo por la página
+    const items = document.querySelectorAll('#'+sbId+' .sb-item');
+    items.forEach(i => {
+      if(i.getAttribute('onclick')?.includes("'"+pageId+"'")) i.classList.add('active');
+    });
+  }
   closeSB();
   // Cargar datos de Supabase según la página que se abre
   if(pageId === 'aut' || pageId === 'hist-sup') cargarAutorizacionesDia();
