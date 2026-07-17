@@ -382,6 +382,9 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
       <div class="sb-item active" onclick="navTo('aut','sb-sup',this)">
         <span class="sb-ico">📋</span><span class="sb-lbl">Autorización de Carga</span>
       </div>
+      <div class="sb-item" onclick="navTo('confirmacion','sb-sup',this)">
+        <span class="sb-ico">⛽</span><span class="sb-lbl">Confirmación</span>
+      </div>
       <div class="sb-sec">Consulta</div>
       <div class="sb-item" onclick="navTo('hist-sup','sb-sup',this)">
         <span class="sb-ico">📄</span><span class="sb-lbl">Historial del Día</span>
@@ -427,6 +430,10 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
       <div class="sb-item" onclick="navTo('focos','sb-dir',this)">
         <span class="sb-ico">🚨</span><span class="sb-lbl">Focos Rojos</span>
         <span class="sb-bdg" id="bdg-focos" style="display:none">0</span>
+      </div>
+      <div class="sb-item" onclick="navTo('confirmacion','sb-dir',this)">
+        <span class="sb-ico">⛽</span><span class="sb-lbl">Confirmación</span>
+        <span class="sb-bdg" id="bdg-confirmacion" style="display:none">0</span>
       </div>
       <div class="sb-sec">Registros</div>
       <div class="sb-item" onclick="navTo('historial','sb-dir',this)">
@@ -757,7 +764,62 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
           </div>
         </div>
     </div>
-    <!-- ══ FOCOS ROJOS ══ -->
+    <!-- ══ CONFIRMACIÓN DE COMBUSTIBLE ══ -->
+<div class="page" id="page-confirmacion" style="display:none">
+  <div class="pg-hd">
+    <div class="pg-title">⛽ Confirmación de Combustible</div>
+    <div class="pg-sub">Confirma la cantidad real cargada y el folio del ticket de cada autorización</div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">Filtrar por unidad</div>
+    <select class="inp sel" id="conf-filtro-unidad" onchange="cargarConfirmaciones()" style="max-width:320px">
+      <option value="">— Todas las unidades —</option>
+    </select>
+  </div>
+  <div class="card">
+    <div class="card-title">Autorizaciones pendientes de confirmar</div>
+    <div class="card-sub" style="margin-bottom:14px">Ordenadas por fecha — confirma la más antigua primero</div>
+    <div id="conf-lista">
+      <div style="text-align:center;padding:28px;color:var(--text-sub);font-size:13px">Cargando...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL CONFIRMAR CARGA (formulario) ══ -->
+<div id="modal-confirmar-carga" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;color:var(--verde-oscuro);margin-bottom:4px">Confirmar carga real</div>
+    <div id="mcc-info" style="font-size:12px;color:var(--text-sub);margin-bottom:18px">Unidad — Fecha — Litros autorizados</div>
+
+    <div class="fg" style="gap:12px">
+      <div>
+        <label class="lbl">Folio del ticket *</label>
+        <input class="inp" type="text" id="mcc-folio" placeholder="Ej. 1414461">
+      </div>
+      <div>
+        <label class="lbl">Litros realmente cargados *</label>
+        <input class="inp" type="number" id="mcc-litros" placeholder="Ej. 164.01" step="0.01">
+      </div>
+      <div>
+        <label class="lbl" style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="mcc-km-na" onchange="toggleKmNA()" style="width:auto">
+          Odómetro no disponible / averiado
+        </label>
+      </div>
+      <div id="mcc-km-wrap">
+        <label class="lbl">KM real (odómetro al momento de la carga)</label>
+        <input class="inp" type="number" id="mcc-km" placeholder="Ej. 54434" step="0.1">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button onclick="cerrarModalConfirmarCarga()" style="background:transparent;color:var(--text-sub);border:1.5px solid var(--gris-borde);border-radius:8px;padding:10px 20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer">Cancelar</button>
+      <button onclick="guardarConfirmacionCarga()" style="background:var(--verde-oscuro);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer">Confirmar carga</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FOCOS ROJOS ══ -->
     <div class="page" id="page-focos">
       <div class="pg-hd">
         <div class="pg-title">🚨 Focos Rojos e Irregularidades</div>
@@ -819,6 +881,7 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
         <button class="rpt-tab active" id="rtab-gral" onclick="setRptTab('gral')">🗂️ Reporte General</button>
         <button class="rpt-tab" id="rtab-unidad" onclick="setRptTab('unidad')">🚛 Por Unidad</button>
         <button class="rpt-tab" id="rtab-estacion" onclick="setRptTab('estacion')">⛽ Por Estación</button>
+        <button class="rpt-tab" id="rtab-confirmacion" onclick="setRptTab('confirmacion')">✅ Confirmación de Carga</button>
       </div>
 
       <!-- PERIODO (común a todos) -->
@@ -924,6 +987,18 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
             <div style="font-size:12px;color:var(--verde)">El reporte incluirá: todas las cargas registradas en la estación, unidades que la usaron, tipo de combustible, precio por litro capturado y cualquier discrepancia de precio detectada.</div>
           </div>
           <div class="btn-row"><button class="btn-excel" onclick="descargarExcelEstacion()">⬇️ Descargar Excel — Estación</button></div>
+        </div>
+      </div>
+
+      <!-- ══ TAB CONFIRMACIÓN DE CARGA ══ -->
+      <div id="rpt-confirmacion" class="rpt-panel" style="display:none">
+        <div class="card">
+          <div class="card-title">✅ Reporte de Confirmación de Carga</div>
+          <div class="card-sub">Formato para cotejo manual contra tickets físicos — mismo formato que el reporte de estación</div>
+          <div style="background:var(--verde-tenue);border-radius:var(--r-sm);padding:12px 14px;margin-top:14px">
+            <div style="font-size:12px;color:var(--verde)">Columnas: BAK, Fecha, Operador, Placas, Folio Ticket, Litros, Total (en blanco para llenar), KM Sistema, KM Confirmado, Estación. El TOTAL y KM manual quedan en blanco para cotejo con el ticket físico.</div>
+          </div>
+          <div class="btn-row"><button class="btn-excel" onclick="descargarExcelConfirmacion()">⬇️ Descargar Excel — Confirmación</button></div>
         </div>
       </div>
     </div>
@@ -1125,9 +1200,12 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
 
     <!-- ══ HISTORIAL POR UNIDAD ══ -->
     <div class="page" id="page-hist-unidad">
-      <div class="pg-hd">
-        <div class="pg-title">🚛 Flota</div>
-        <div class="pg-sub">Historial completo, rendimiento y comportamiento de cada unidad de la flota</div>
+      <div class="pg-hd" style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div class="pg-title">🚛 Flota</div>
+          <div class="pg-sub">Historial completo, rendimiento y comportamiento de cada unidad de la flota</div>
+        </div>
+        <button onclick="abrirModalNuevaUnidad()" style="background:var(--verde-oscuro);color:#fff;border:none;border-radius:8px;padding:9px 18px;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">+ Agregar Unidad</button>
       </div>
 
       <!-- Selector de unidad -->
@@ -1740,6 +1818,72 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
   </div>
 </div>
 
+<!-- ══ MODAL NUEVA UNIDAD ══ -->
+<div id="modal-nueva-unidad" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;color:var(--verde-oscuro);margin-bottom:18px">+ Nueva Unidad de Flota</div>
+    <div class="fg" style="gap:12px">
+      <div>
+        <label class="lbl">Número económico (ej. BAK-34) *</label>
+        <input class="inp" type="text" id="nu-eco" placeholder="BAK-34">
+      </div>
+      <div>
+        <label class="lbl">Placas</label>
+        <input class="inp" type="text" id="nu-placas" placeholder="ABC1234">
+      </div>
+      <div>
+        <label class="lbl">Tipo de combustible</label>
+        <select class="inp sel" id="nu-combustible">
+          <option value="DIESEL">Diesel</option>
+          <option value="MAGNA">Magna</option>
+          <option value="PREMIUM">Premium</option>
+        </select>
+      </div>
+      <div>
+        <label class="lbl">Capacidad de tanque (litros)</label>
+        <input class="inp" type="number" id="nu-capacidad" placeholder="Ej. 209">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button onclick="cerrarModalNuevaUnidad()" style="background:transparent;color:var(--text-sub);border:1.5px solid var(--gris-borde);border-radius:8px;padding:10px 20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer">Cancelar</button>
+      <button onclick="guardarNuevaUnidad()" style="background:var(--verde-oscuro);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer">Guardar unidad</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL CONFIRMAR PLACAS (banner primer login) ══ -->
+<div id="modal-confirmar-placas" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:16px;max-width:560px;width:100%;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.25);max-height:85vh;display:flex;flex-direction:column">
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;color:var(--verde-oscuro);margin-bottom:4px">🚚 Confirma las placas de la flota</div>
+    <div style="font-size:13px;color:var(--text-sub);margin-bottom:16px">Revisa que la placa registrada de cada unidad sea correcta. Esto solo se pide una vez.</div>
+    <div id="cp-lista" style="overflow-y:auto;flex:1;margin-bottom:16px">
+      <div style="text-align:center;padding:20px;color:var(--text-sub);font-size:13px">Cargando unidades...</div>
+    </div>
+    <div style="display:flex;justify-content:flex-end">
+      <button onclick="guardarConfirmacionPlacas()" style="background:var(--verde-oscuro);color:#fff;border:none;border-radius:8px;padding:10px 24px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer">Confirmar y continuar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL CONFIRMAR CARGA PENDIENTE ══ -->
+<div id="modal-confirmar-pendiente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:16px;max-width:460px;width:100%;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="background:var(--verde-tenue);border-radius:10px;padding:10px;flex-shrink:0;font-size:24px">⛽</div>
+      <div>
+        <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;color:var(--verde-oscuro)">Confirmación pendiente</div>
+      </div>
+    </div>
+    <div style="font-size:14px;color:var(--text);margin-bottom:18px;line-height:1.6">
+      Antes de continuar con la siguiente autorización de combustible de la unidad <strong id="mcp-unidad" style="color:var(--verde-oscuro)">BAK-00</strong>, confirma la cantidad de combustible cargado en su autorización anterior.
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="cerrarModalConfirmarPendiente()" style="background:transparent;color:var(--text-sub);border:1.5px solid var(--gris-borde);border-radius:8px;padding:10px 20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer">Cancelar</button>
+      <button onclick="irAConfirmacionPendiente()" style="background:var(--verde-oscuro);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer">Ir a confirmación →</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODAL ODÓMETRO ALERTA ══ -->
 <div id="modal-odo-alerta" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:20px">
   <div style="background:#fff;border-radius:16px;max-width:460px;width:100%;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
@@ -1965,6 +2109,7 @@ function iniciarApp(email, rol, nombre){
   poblarSelectUnidades(); // Llenar el selector de unidades con datos reales de Supabase
   configurarUpdates(rol);
   if(rol === 'direccion') setTimeout(cargarDashboardCharts, 500);
+  setTimeout(verificarBannerPlacas, 1200);
 
   // Pre-cargar nombre del supervisor en el formulario
   setTimeout(async () => {
@@ -2049,6 +2194,7 @@ function navTo(pageId, sbId, el){
   }
   if(pageId === 'historial') cargarHistorialGeneral();
   if(pageId === 'focos') cargarFocosRojos();
+  if(pageId === 'confirmacion') cargarConfirmaciones();
   if(pageId === 'hist-unidad') cargarHistorialUnidad();
   if(pageId === 'ajustes'){ cargarAjustes(); setTimeout(cargarCuentas, 400); }
   if(pageId === 'ajustes-sup') cargarPerfil();
@@ -2199,6 +2345,239 @@ function buildPreview(){
   } else {
     document.getElementById('aut-preview').dataset.especial = '';
   }
+}
+
+// ════════════ CONFIRMACIÓN DE CARGA REAL ════════════
+let unidadPendienteConfirmar = null;
+
+async function verificarConfirmacionPendiente(unidadId, numeroEco){
+  // Revisa si esta unidad tiene alguna autorización sin confirmar
+  const { data, error } = await supa.from('autorizaciones')
+    .select('id, fecha')
+    .eq('unidad_id', unidadId)
+    .eq('confirmado', false)
+    .order('fecha', { ascending: true })
+    .limit(1);
+
+  if(error){ console.warn('verificarConfirmacionPendiente:', error); return false; }
+  if(data && data.length > 0){
+    unidadPendienteConfirmar = { unidadId, numeroEco };
+    document.getElementById('mcp-unidad').textContent = numeroEco;
+    document.getElementById('modal-confirmar-pendiente').style.display = 'flex';
+    return true;
+  }
+  return false;
+}
+
+function cerrarModalConfirmarPendiente(){
+  document.getElementById('modal-confirmar-pendiente').style.display = 'none';
+  unidadPendienteConfirmar = null;
+}
+
+function irAConfirmacionPendiente(){
+  document.getElementById('modal-confirmar-pendiente').style.display = 'none';
+  if(typeof navTo === 'function') navTo('confirmacion','sb-dir');
+  setTimeout(() => {
+    if(unidadPendienteConfirmar && typeof filtrarConfirmacionPorUnidad === 'function'){
+      filtrarConfirmacionPorUnidad(unidadPendienteConfirmar.unidadId);
+    }
+  }, 400);
+}
+
+// ════════════ NUEVA UNIDAD DE FLOTA ════════════
+function abrirModalNuevaUnidad(){
+  document.getElementById('nu-eco').value = '';
+  document.getElementById('nu-placas').value = '';
+  document.getElementById('nu-capacidad').value = '';
+  document.getElementById('modal-nueva-unidad').style.display = 'flex';
+}
+function cerrarModalNuevaUnidad(){
+  document.getElementById('modal-nueva-unidad').style.display = 'none';
+}
+async function guardarNuevaUnidad(){
+  const eco = document.getElementById('nu-eco').value.trim().toUpperCase();
+  const placas = document.getElementById('nu-placas').value.trim().toUpperCase();
+  const combustible = document.getElementById('nu-combustible').value;
+  const capacidad = parseFloat(document.getElementById('nu-capacidad').value) || null;
+
+  if(!eco || eco.length < 3){ alert('⚠️ Captura un número económico válido (ej. BAK-34).'); return; }
+
+  const { data: existe } = await supa.from('unidades').select('id').eq('numero_eco', eco).limit(1);
+  if(existe && existe.length > 0){ alert('⚠️ Ya existe una unidad con ese número económico.'); return; }
+
+  const { error } = await supa.from('unidades').insert({
+    numero_eco: eco, placas, tipo_combustible: combustible,
+    capacidad_tanque: capacidad, activo: true
+  });
+
+  if(error){ alert('Error al guardar: '+error.message); return; }
+
+  cerrarModalNuevaUnidad();
+  alert('✅ Unidad '+eco+' agregada correctamente.');
+  poblarSelectUnidades();
+  if(typeof poblarSelectConfirmacion === 'function'){
+    document.getElementById('conf-filtro-unidad')?.querySelectorAll('option:not(:first-child)').forEach(o=>o.remove());
+  }
+}
+
+// ════════════ BANNER CONFIRMAR PLACAS (primer login) ════════════
+async function verificarBannerPlacas(){
+  const { data: { session } } = await supa.auth.getSession();
+  if(!session) return;
+  const { data: perfil } = await supa.from('perfiles')
+    .select('placas_confirmadas, rol').eq('id', session.user.id).single();
+  if(!perfil || perfil.placas_confirmadas) return;
+  if(perfil.rol !== 'direccion') return; // Solo Dirección confirma placas de flota
+
+  const { data: unidades } = await supa.from('unidades')
+    .select('id, numero_eco, placas').order('numero_eco', {ascending:true});
+
+  const lista = document.getElementById('cp-lista');
+  if(!lista || !unidades) return;
+  lista.innerHTML = '';
+  unidades.forEach(u => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gris-borde)';
+    row.innerHTML = `
+      <div style="width:70px;font-weight:700;font-size:13px;color:var(--text)">${sanitize(u.numero_eco)}</div>
+      <input class="inp" type="text" value="${sanitize(u.placas||'')}" data-uid="${u.id}" placeholder="Sin placa" style="flex:1;padding:6px 10px;font-size:13px">`;
+    lista.appendChild(row);
+  });
+
+  document.getElementById('modal-confirmar-placas').style.display = 'flex';
+}
+
+async function guardarConfirmacionPlacas(){
+  const inputs = document.querySelectorAll('#cp-lista input[data-uid]');
+  for(const inp of inputs){
+    const uid = inp.getAttribute('data-uid');
+    const val = inp.value.trim().toUpperCase();
+    await supa.from('unidades').update({ placas: val }).eq('id', uid);
+  }
+  const { data: { session } } = await supa.auth.getSession();
+  if(session){
+    await supa.from('perfiles').update({ placas_confirmadas: true }).eq('id', session.user.id);
+  }
+  document.getElementById('modal-confirmar-placas').style.display = 'none';
+}
+
+// ════════════ PÁGINA CONFIRMACIÓN DE COMBUSTIBLE ════════════
+let confirmarActualId = null;
+
+async function poblarSelectConfirmacion(){
+  const sel = document.getElementById('conf-filtro-unidad');
+  if(!sel || sel.options.length > 1) return;
+  const { data } = await supa.from('unidades').select('id, numero_eco').order('numero_eco', {ascending:true});
+  (data||[]).forEach(u => {
+    const opt = document.createElement('option');
+    opt.value = u.id;
+    opt.textContent = u.numero_eco;
+    sel.appendChild(opt);
+  });
+}
+
+async function cargarConfirmaciones(){
+  await poblarSelectConfirmacion();
+  const lista = document.getElementById('conf-lista');
+  const filtroUnidad = document.getElementById('conf-filtro-unidad')?.value;
+  if(!lista) return;
+  lista.innerHTML = '<div style="text-align:center;padding:28px;color:var(--text-sub);font-size:13px">Cargando...</div>';
+
+  let query = supa.from('autorizaciones')
+    .select('id, fecha, hora, litros_autorizados, unidades(numero_eco), estaciones(nombre), supervisor')
+    .eq('confirmado', false)
+    .order('fecha', {ascending: true});
+
+  if(filtroUnidad) query = query.eq('unidad_id', filtroUnidad);
+
+  const { data, error } = await query;
+
+  if(error){ lista.innerHTML = '<div style="color:var(--rojo);padding:12px">Error al cargar.</div>'; return; }
+
+  actualizarBadgeConfirmacion(data?.length || 0);
+
+  if(!data || data.length === 0){
+    lista.innerHTML = '<div style="text-align:center;padding:36px 20px;color:var(--text-sub)"><div style="font-size:36px;margin-bottom:10px">✅</div><div style="font-weight:700;color:var(--verde)">Todo confirmado</div><div style="font-size:13px;margin-top:4px">No hay cargas pendientes de confirmar.</div></div>';
+    return;
+  }
+
+  lista.innerHTML = '';
+  data.forEach(a => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid var(--gris-borde);border-radius:10px;margin-bottom:8px;background:#fffbf0';
+    row.innerHTML = `
+      <div>
+        <div style="font-weight:700;font-size:13px;color:var(--text)">${sanitize(a.unidades?.numero_eco||'?')} — ${a.fecha} ${a.hora||''}</div>
+        <div style="font-size:12px;color:var(--text-sub);margin-top:2px">${sanitize(a.estaciones?.nombre||'')} · ${a.litros_autorizados||0}L autorizados · ${sanitize(a.supervisor||'')}</div>
+      </div>
+      <button onclick="abrirModalConfirmarCarga(${a.id},'${sanitize(a.unidades?.numero_eco||'?')}','${a.fecha}',${a.litros_autorizados||0})" style="background:var(--verde-oscuro);color:#fff;border:none;border-radius:7px;padding:8px 16px;font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap">Confirmar</button>`;
+    lista.appendChild(row);
+  });
+}
+
+function filtrarConfirmacionPorUnidad(unidadId){
+  const sel = document.getElementById('conf-filtro-unidad');
+  if(sel){ sel.value = unidadId; cargarConfirmaciones(); }
+}
+
+function actualizarBadgeConfirmacion(n){
+  ['bdg-confirmacion'].forEach(id => {
+    const b = document.getElementById(id);
+    if(b){ b.textContent = n; b.style.display = n > 0 ? 'inline-block' : 'none'; }
+  });
+}
+
+function abrirModalConfirmarCarga(id, numeroEco, fecha, litrosAut){
+  confirmarActualId = id;
+  document.getElementById('mcc-info').textContent = `${numeroEco} — ${fecha} — ${litrosAut}L autorizados`;
+  document.getElementById('mcc-folio').value = '';
+  document.getElementById('mcc-litros').value = '';
+  document.getElementById('mcc-km').value = '';
+  document.getElementById('mcc-km-na').checked = false;
+  toggleKmNA();
+  document.getElementById('modal-confirmar-carga').style.display = 'flex';
+}
+
+function cerrarModalConfirmarCarga(){
+  document.getElementById('modal-confirmar-carga').style.display = 'none';
+  confirmarActualId = null;
+}
+
+function toggleKmNA(){
+  const na = document.getElementById('mcc-km-na').checked;
+  const wrap = document.getElementById('mcc-km-wrap');
+  if(wrap) wrap.style.display = na ? 'none' : 'block';
+}
+
+async function guardarConfirmacionCarga(){
+  if(!confirmarActualId) return;
+  const folio = document.getElementById('mcc-folio').value.trim();
+  const litros = parseFloat(document.getElementById('mcc-litros').value);
+  const kmNA = document.getElementById('mcc-km-na').checked;
+  const km = kmNA ? null : parseFloat(document.getElementById('mcc-km').value);
+
+  if(!folio){ alert('⚠️ El folio del ticket es obligatorio.'); return; }
+  if(!litros || litros <= 0){ alert('⚠️ Captura los litros realmente cargados.'); return; }
+  if(!kmNA && (!km || km <= 0)){ alert('⚠️ Captura el KM real o marca "Odómetro no disponible".'); return; }
+
+  const { data: { session } } = await supa.auth.getSession();
+  const email = session?.user?.email || 'desconocido';
+
+  const { error } = await supa.from('autorizaciones').update({
+    confirmado: true,
+    folio_ticket: folio,
+    litros_confirmados: litros,
+    km_confirmado: km,
+    km_no_disponible: kmNA,
+    confirmado_por: email,
+    confirmado_fecha: new Date().toISOString()
+  }).eq('id', confirmarActualId);
+
+  if(error){ alert('Error al guardar: '+error.message); return; }
+
+  cerrarModalConfirmarCarga();
+  alert('✅ Carga confirmada correctamente.');
+  cargarConfirmaciones();
 }
 
 // ════════════ MODAL ODÓMETRO ALERTA ════════════
@@ -2760,14 +3139,24 @@ async function calcAsig(){
   const parts = val.split('|');
   // Nuevo formato: ID|ECO|PLACAS|COMB — usar ID directo
   let unidId = null;
+  let numeroEco = parts[1] || parts[0];
   if(parts.length >= 4 && !isNaN(parseInt(parts[0]))){
     unidId = parseInt(parts[0]);
   } else {
     // Fallback: buscar por número económico
     const { data: uRow } = await supa.from('unidades').select('id').eq('numero_eco', parts[0].trim()).single();
     unidId = uRow?.id || null;
+    numeroEco = parts[0].trim();
   }
   if(!unidId) return;
+
+  // Verificar si hay carga pendiente de confirmar para esta unidad — bloqueo duro
+  const tienePendiente = await verificarConfirmacionPendiente(unidId, numeroEco);
+  if(tienePendiente){
+    document.getElementById('a-unidad').value = '';
+    return;
+  }
+
   const { data: lastAut } = await supa.from('autorizaciones')
     .select('odometro_ini').eq('unidad_id', unidId)
     .order('created_at',{ascending:false}).limit(1);
@@ -3512,7 +3901,7 @@ function configurarUpdates(rol){
 
 // ════════════ REPORT TABS ════════════
 function setRptTab(tab){
-  ['gral','unidad','estacion'].forEach(t=>{
+  ['gral','unidad','estacion','confirmacion'].forEach(t=>{
     document.getElementById('rtab-'+t).classList.toggle('active', t===tab);
     document.getElementById('rpt-'+t).style.display = t===tab ? 'block' : 'none';
   });
@@ -4122,6 +4511,52 @@ async function descargarExcelEstacion(){
     Object.entries(porEst).forEach(([nom,filas])=>{XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(filas),nom.slice(0,31));});
     XLSX.writeFile(wb,'BioCombustibles_Estaciones_'+fechaIni+'_'+fechaFin+'.xlsx');
   } catch(err){alert('Error: '+err.message);}
+}
+
+// ════════════ EXCEL CONFIRMACIÓN DE CARGA (formato BAK/Estanzuela) ════════════
+async function descargarExcelConfirmacion(){
+  const fechaIni = document.getElementById('r-desde').value;
+  const fechaFin = document.getElementById('r-hasta').value;
+  if(!fechaIni||!fechaFin){ alert('⚠️ Selecciona el periodo.'); return; }
+  try {
+    const { data, error } = await supa.from('autorizaciones')
+      .select('fecha, operador, folio_ticket, litros_autorizados, litros_confirmados, odometro_ini, km_confirmado, km_no_disponible, unidades(numero_eco, placas), estaciones(nombre)')
+      .gte('fecha', fechaIni).lte('fecha', fechaFin)
+      .order('fecha', {ascending:true});
+
+    if(error || !data){ alert('Error: '+(error?.message||'sin datos')); return; }
+
+    const filas = data.map(r => ({
+      'BAK': r.unidades?.numero_eco || '—',
+      'FECHA': r.fecha,
+      'OPERADOR': r.operador || '—',
+      'PLACAS': r.unidades?.placas || '—',
+      'FOLIO TICKET': r.folio_ticket || '',
+      'LITROS': r.litros_confirmados || r.litros_autorizados || '',
+      'TOTAL': '',
+      'KM REGISTRADO EN BIOCOMBUSTIBLES': r.km_no_disponible ? 'ODÓMETRO NO FUNCIONA' : (r.km_confirmado || r.odometro_ini || ''),
+      'KM': '',
+      'ESTACION': r.estaciones?.nombre || '—'
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(filas);
+
+    // Resaltar en rojo las filas con odómetro no disponible
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for(let R = 1; R <= range.e.r; R++){
+      const cellAddr = XLSX.utils.encode_cell({r:R, c:7}); // columna KM REGISTRADO
+      const cell = ws[cellAddr];
+      if(cell && cell.v === 'ODÓMETRO NO FUNCIONA'){
+        if(!cell.s) cell.s = {};
+        cell.s.fill = { patternType:'solid', fgColor:{rgb:'FFC7CE'} };
+        cell.s.font = { color:{rgb:'9C0006'}, bold:true };
+      }
+    }
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Confirmacion');
+    XLSX.writeFile(wb, 'BioCombustibles_Confirmacion_'+fechaIni+'_'+fechaFin+'.xlsx');
+  } catch(err){ alert('Error: '+err.message); }
 }
 
 // ════════════ MODAL PERFIL INCOMPLETO ════════════
