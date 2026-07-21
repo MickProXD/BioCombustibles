@@ -771,53 +771,25 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
 <div class="page" id="page-confirmacion" style="display:none">
   <div class="pg-hd">
     <div class="pg-title">⛽ Confirmación de Combustible</div>
-    <div class="pg-sub">Confirma la cantidad real cargada y el folio del ticket de cada autorización</div>
-  </div>
-  <div class="card" style="margin-bottom:16px">
-    <div class="card-title">Filtrar por unidad</div>
-    <select class="inp sel" id="conf-filtro-unidad" onchange="cargarConfirmaciones()" style="max-width:320px">
-      <option value="">— Todas las unidades —</option>
-    </select>
+    <div class="pg-sub">Confirma la cantidad real cargada y el folio del ticket de cada autorización pendiente</div>
   </div>
   <div class="card">
-    <div class="card-title">Autorizaciones pendientes de confirmar</div>
-    <div class="card-sub" style="margin-bottom:14px">Ordenadas por fecha — confirma la más antigua primero</div>
-    <div id="conf-lista">
-      <div style="text-align:center;padding:28px;color:var(--text-sub);font-size:13px">Cargando...</div>
+    <div class="filtro-bar">
+      <select class="inp sel" id="conf-filtro-unidad" style="flex:0 0 auto;width:200px;margin:0;padding:9px 36px 9px 12px" onchange="cargarConfirmaciones()">
+        <option value="">Todas las unidades</option>
+      </select>
     </div>
-  </div>
-</div>
-
-<!-- ══ MODAL CONFIRMAR CARGA (formulario) ══ -->
-<div id="modal-confirmar-carga" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center;padding:20px">
-  <div style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
-    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;color:var(--verde-oscuro);margin-bottom:4px">Confirmar carga real</div>
-    <div id="mcc-info" style="font-size:12px;color:var(--text-sub);margin-bottom:18px">Unidad — Fecha — Litros autorizados</div>
-
-    <div class="fg" style="gap:12px">
-      <div>
-        <label class="lbl">Folio del ticket *</label>
-        <input class="inp" type="text" id="mcc-folio" placeholder="Ej. 1414461">
-      </div>
-      <div>
-        <label class="lbl">Litros realmente cargados *</label>
-        <input class="inp" type="number" id="mcc-litros" placeholder="Ej. 164.01" step="0.01">
-      </div>
-      <div>
-        <label class="lbl" style="display:flex;align-items:center;gap:8px">
-          <input type="checkbox" id="mcc-km-na" onchange="toggleKmNA()" style="width:auto">
-          Odómetro no disponible / averiado
-        </label>
-      </div>
-      <div id="mcc-km-wrap">
-        <label class="lbl">KM real (odómetro al momento de la carga)</label>
-        <input class="inp" type="number" id="mcc-km" placeholder="Ej. 54434" step="0.1">
-      </div>
-    </div>
-
-    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
-      <button onclick="cerrarModalConfirmarCarga()" style="background:transparent;color:var(--text-sub);border:1.5px solid var(--gris-borde);border-radius:8px;padding:10px 20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer">Cancelar</button>
-      <button onclick="guardarConfirmacionCarga()" style="background:var(--verde-oscuro);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer">Confirmar carga</button>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Unidad</th><th>Fecha</th><th>Hora</th><th>Estación</th><th>Supervisor</th>
+          <th>Litros autorizados</th><th>Folio ticket *</th><th>Litros reales *</th>
+          <th>Odómetro real / KM</th><th>Guardar</th>
+        </tr></thead>
+        <tbody id="tbody-confirmacion">
+          <tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text-sub)">Cargando...</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -2464,9 +2436,7 @@ async function guardarConfirmacionPlacas(){
   document.getElementById('modal-confirmar-placas').style.display = 'none';
 }
 
-// ════════════ PÁGINA CONFIRMACIÓN DE COMBUSTIBLE ════════════
-let confirmarActualId = null;
-
+// ════════════ PÁGINA CONFIRMACIÓN DE COMBUSTIBLE (tabla inline, sin modal) ════════════
 async function poblarSelectConfirmacion(){
   const sel = document.getElementById('conf-filtro-unidad');
   if(!sel || sel.options.length > 1) return;
@@ -2481,10 +2451,10 @@ async function poblarSelectConfirmacion(){
 
 async function cargarConfirmaciones(){
   await poblarSelectConfirmacion();
-  const lista = document.getElementById('conf-lista');
+  const tbody = document.getElementById('tbody-confirmacion');
   const filtroUnidad = document.getElementById('conf-filtro-unidad')?.value;
-  if(!lista) return;
-  lista.innerHTML = '<div style="text-align:center;padding:28px;color:var(--text-sub);font-size:13px">Cargando...</div>';
+  if(!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text-sub)">Cargando...</td></tr>';
 
   let query = supa.from('autorizaciones')
     .select('id, fecha, hora, litros_autorizados, unidades(numero_eco), estaciones(nombre), supervisor')
@@ -2495,26 +2465,36 @@ async function cargarConfirmaciones(){
 
   const { data, error } = await query;
 
-  if(error){ lista.innerHTML = '<div style="color:var(--rojo);padding:12px">Error al cargar.</div>'; return; }
+  if(error){ tbody.innerHTML = '<tr><td colspan="10" style="color:var(--rojo);padding:12px;text-align:center">Error al cargar: '+sanitize(error.message)+'</td></tr>'; return; }
 
   actualizarBadgeConfirmacion(data?.length || 0);
 
   if(!data || data.length === 0){
-    lista.innerHTML = '<div style="text-align:center;padding:36px 20px;color:var(--text-sub)"><div style="font-size:36px;margin-bottom:10px">✅</div><div style="font-weight:700;color:var(--verde)">Todo confirmado</div><div style="font-size:13px;margin-top:4px">No hay cargas pendientes de confirmar.</div></div>';
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--verde);font-weight:700">✅ Todo confirmado — no hay cargas pendientes.</td></tr>';
     return;
   }
 
-  lista.innerHTML = '';
+  tbody.innerHTML = '';
   data.forEach(a => {
-    const row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid var(--gris-borde);border-radius:10px;margin-bottom:8px;background:#fffbf0';
-    row.innerHTML = `
-      <div>
-        <div style="font-weight:700;font-size:13px;color:var(--text)">${sanitize(a.unidades?.numero_eco||'?')} — ${a.fecha} ${a.hora||''}</div>
-        <div style="font-size:12px;color:var(--text-sub);margin-top:2px">${sanitize(a.estaciones?.nombre||'')} · ${a.litros_autorizados||0}L autorizados · ${sanitize(a.supervisor||'')}</div>
-      </div>
-      <button onclick="abrirModalConfirmarCarga(${a.id},'${sanitize(a.unidades?.numero_eco||'?')}','${a.fecha}',${a.litros_autorizados||0})" style="background:var(--verde-oscuro);color:#fff;border:none;border-radius:7px;padding:8px 16px;font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap">Confirmar</button>`;
-    lista.appendChild(row);
+    const tr = document.createElement('tr');
+    tr.id = 'conf-row-'+a.id;
+    tr.innerHTML = `
+      <td><strong>${sanitize(a.unidades?.numero_eco||'?')}</strong></td>
+      <td>${a.fecha}</td>
+      <td>${a.hora||'—'}</td>
+      <td>${sanitize(a.estaciones?.nombre||'—')}</td>
+      <td>${sanitize(a.supervisor||'—')}</td>
+      <td>${a.litros_autorizados||0} L</td>
+      <td><input type="text" class="inp" id="cf-folio-${a.id}" placeholder="Folio" style="width:110px;padding:6px 8px;font-size:12px"></td>
+      <td><input type="number" class="inp" id="cf-litros-${a.id}" placeholder="Litros" style="width:80px;padding:6px 8px;font-size:12px" step="0.01"></td>
+      <td style="white-space:nowrap">
+        <input type="number" class="inp" id="cf-km-${a.id}" placeholder="KM" style="width:80px;padding:6px 8px;font-size:12px;display:inline-block" step="0.1">
+        <label style="font-size:10px;color:var(--text-sub);display:inline-flex;align-items:center;gap:3px;margin-left:4px">
+          <input type="checkbox" id="cf-kmna-${a.id}" onchange="toggleKmNAFila(${a.id})" style="width:auto"> N/D
+        </label>
+      </td>
+      <td><button onclick="guardarConfirmacionFila(${a.id})" style="background:var(--verde-oscuro);color:#fff;border:none;border-radius:6px;padding:7px 14px;font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap">Guardar</button></td>`;
+    tbody.appendChild(tr);
   });
 }
 
@@ -2524,44 +2504,25 @@ function filtrarConfirmacionPorUnidad(unidadId){
 }
 
 function actualizarBadgeConfirmacion(n){
-  ['bdg-confirmacion'].forEach(id => {
-    const b = document.getElementById(id);
-    if(b){ b.textContent = n; b.style.display = n > 0 ? 'inline-block' : 'none'; }
-  });
+  const b = document.getElementById('bdg-confirmacion');
+  if(b){ b.textContent = n; b.style.display = n > 0 ? 'inline-block' : 'none'; }
 }
 
-function abrirModalConfirmarCarga(id, numeroEco, fecha, litrosAut){
-  confirmarActualId = id;
-  document.getElementById('mcc-info').textContent = `${numeroEco} — ${fecha} — ${litrosAut}L autorizados`;
-  document.getElementById('mcc-folio').value = '';
-  document.getElementById('mcc-litros').value = '';
-  document.getElementById('mcc-km').value = '';
-  document.getElementById('mcc-km-na').checked = false;
-  toggleKmNA();
-  document.getElementById('modal-confirmar-carga').style.display = 'flex';
+function toggleKmNAFila(id){
+  const na = document.getElementById('cf-kmna-'+id)?.checked;
+  const kmInput = document.getElementById('cf-km-'+id);
+  if(kmInput){ kmInput.disabled = na; if(na) kmInput.value=''; }
 }
 
-function cerrarModalConfirmarCarga(){
-  document.getElementById('modal-confirmar-carga').style.display = 'none';
-  confirmarActualId = null;
-}
-
-function toggleKmNA(){
-  const na = document.getElementById('mcc-km-na').checked;
-  const wrap = document.getElementById('mcc-km-wrap');
-  if(wrap) wrap.style.display = na ? 'none' : 'block';
-}
-
-async function guardarConfirmacionCarga(){
-  if(!confirmarActualId) return;
-  const folio = document.getElementById('mcc-folio').value.trim();
-  const litros = parseFloat(document.getElementById('mcc-litros').value);
-  const kmNA = document.getElementById('mcc-km-na').checked;
-  const km = kmNA ? null : parseFloat(document.getElementById('mcc-km').value);
+async function guardarConfirmacionFila(id){
+  const folio = document.getElementById('cf-folio-'+id)?.value.trim();
+  const litros = parseFloat(document.getElementById('cf-litros-'+id)?.value);
+  const kmNA = document.getElementById('cf-kmna-'+id)?.checked;
+  const km = kmNA ? null : parseFloat(document.getElementById('cf-km-'+id)?.value);
 
   if(!folio){ alert('⚠️ El folio del ticket es obligatorio.'); return; }
   if(!litros || litros <= 0){ alert('⚠️ Captura los litros realmente cargados.'); return; }
-  if(!kmNA && (!km || km <= 0)){ alert('⚠️ Captura el KM real o marca "Odómetro no disponible".'); return; }
+  if(!kmNA && (!km || km <= 0)){ alert('⚠️ Captura el KM real o marca "N/D" si el odómetro no funciona.'); return; }
 
   const { data: { session } } = await supa.auth.getSession();
   const email = session?.user?.email || 'desconocido';
@@ -2571,16 +2532,16 @@ async function guardarConfirmacionCarga(){
     folio_ticket: folio,
     litros_confirmados: litros,
     km_confirmado: km,
-    km_no_disponible: kmNA,
+    km_no_disponible: !!kmNA,
     confirmado_por: email,
     confirmado_fecha: new Date().toISOString()
-  }).eq('id', confirmarActualId);
+  }).eq('id', id);
 
   if(error){ alert('Error al guardar: '+error.message); return; }
 
-  cerrarModalConfirmarCarga();
-  alert('✅ Carga confirmada correctamente.');
-  cargarConfirmaciones();
+  const row = document.getElementById('conf-row-'+id);
+  if(row) row.remove();
+  cargarConfirmaciones(); // refresca conteo y badge
 }
 
 // ════════════ MODAL ODÓMETRO ALERTA ════════════
