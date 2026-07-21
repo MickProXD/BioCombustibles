@@ -4267,7 +4267,22 @@ async function cargarFocosRojos(){
 }
 
 // ════════════ UPDATES SUPERVISOR ════════════
-const SISTEMA_VERSION = '1.3';
+const SISTEMA_VERSION = '1.4';
+
+// ════════════ ANTI-CACHÉ: detecta versión obsoleta y recarga sola ════════════
+(function verificarVersionVigente(){
+  fetch(location.href, { cache: 'no-store' })
+    .then(r => r.text())
+    .then(html => {
+      const match = html.match(/const SISTEMA_VERSION = '([\d.]+)'/);
+      const versionServidor = match ? match[1] : null;
+      if(versionServidor && versionServidor !== SISTEMA_VERSION){
+        console.warn('Versión obsoleta detectada. Recargando...');
+        location.reload(true);
+      }
+    })
+    .catch(()=>{}); // silencioso si falla, no bloquea el uso normal
+})();
 
 async function verificarUpdatesSupervisor(){
   if(curRole !== 'supervisor') return;
