@@ -446,6 +446,9 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
       <div class="sb-item" onclick="navTo('hist-unidad','sb-dir',this)">
         <span class="sb-ico">🚛</span><span class="sb-lbl">Flota</span>
       </div>
+      <div class="sb-item" onclick="navTo('rendimiento','sb-dir',this)">
+        <span class="sb-ico">📈</span><span class="sb-lbl">Rendimiento</span>
+      </div>
       <div class="sb-item" onclick="navTo('reporte','sb-dir',this)">
         <span class="sb-ico">📊</span><span class="sb-lbl">Reportes</span>
       </div>
@@ -522,7 +525,7 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
               </select>
             </div>
             <div class="fgg"><label class="lbl">Operador / Chofer *</label><input class="inp" type="text" id="a-op" placeholder="Nombre completo del chofer"></div>
-            <div class="fgg"><label class="lbl">Odómetro inicial (km) *</label><input class="inp" type="number" id="a-odo" placeholder="Ej. 87340" oninput="validarOdo(this)" min="0" max="9999999">
+            <div class="fgg"><label class="lbl">Odómetro inicial (km) *</label><input class="inp" type="number" id="a-odo" placeholder="Ej. 87340" oninput="validarOdo(this); actualizarSugerenciaLitros();" min="0" max="9999999">
               <div id="odo-warn" style="display:none;font-size:11px;color:var(--amarillo);font-weight:600;margin-top:6px;padding:6px 10px;background:var(--amarillo-t);border-radius:6px">⚠️ Este odómetro es igual o menor al último registrado. Verifica la lectura.</div>
               <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer;font-size:12px;color:var(--text-sub)">
                 <input type="checkbox" id="a-odo-na" onchange="toggleOdoNA(this)" style="width:16px;height:16px;accent-color:var(--verde);cursor:pointer">
@@ -538,6 +541,7 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
               <label class="lbl">Litros autorizados *</label>
               <input class="inp" type="number" id="a-litros" placeholder="Ej. 60" min="1" max="500" style="margin:0">
               <div style="font-size:11px;color:var(--text-sub);margin-top:4px">Cantidad de litros que el supervisor autoriza cargar</div>
+              <div id="sugerencia-litros" style="display:none;margin-top:8px;padding:10px 12px;border-radius:8px;font-size:12px;line-height:1.5"></div>
             </div>
           </div>
           <div class="fg" style="margin-top:13px;gap:13px">
@@ -1294,6 +1298,26 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
       </div>
     </div>
 
+    <!-- ══ RENDIMIENTO POR UNIDAD ══ -->
+    <div class="page" id="page-rendimiento">
+      <div class="pg-hd">
+        <div class="pg-title">📈 Rendimiento por Unidad</div>
+        <div class="pg-sub">Referencia de km/L usada para calcular las sugerencias de litros en autorización y confirmación</div>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>Unidad</th><th>Placas</th><th>Combustible</th><th>Recorrido típico</th>
+              <th>Rendimiento</th><th>Estación asignada</th><th>Precio ref.</th><th>Notas</th>
+            </tr></thead>
+            <tbody id="tbody-rendimiento">
+              <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-sub)">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
     <!-- ══ MI PERFIL (SUPERVISOR) ══ -->
     <div class="page" id="page-ajustes-sup">
@@ -1859,6 +1883,19 @@ tbody td{padding:10px 12px;color:var(--text);vertical-align:middle;}
   </div>
 </div>
 
+<!-- ══ MODAL CONFIRMAR GUARDADO (con justificación de rendimiento) ══ -->
+<div id="modal-confirmar-guardado" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:16px;max-width:460px;width:100%;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;color:var(--verde-oscuro);margin-bottom:4px">¿Confirmar esta carga?</div>
+    <div id="mcg-resumen" style="font-size:12px;color:var(--text-sub);margin-bottom:14px">Folio — Litros — KM</div>
+    <div id="mcg-justificacion" style="font-size:13px;color:var(--text);line-height:1.6;background:var(--bg,#f7f8f7);border-radius:8px;padding:12px 14px;margin-bottom:18px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="cerrarModalConfirmarGuardado()" style="background:transparent;color:var(--text-sub);border:1.5px solid var(--gris-borde);border-radius:8px;padding:10px 20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer">Cancelar</button>
+      <button onclick="ejecutarGuardarConfirmacion()" style="background:var(--verde-oscuro);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer">Sí, confirmar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODAL ODÓMETRO ALERTA ══ -->
 <div id="modal-odo-alerta" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:20px">
   <div style="background:#fff;border-radius:16px;max-width:460px;width:100%;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
@@ -2170,6 +2207,7 @@ function navTo(pageId, sbId, el){
   if(pageId === 'historial') cargarHistorialGeneral();
   if(pageId === 'focos') cargarFocosRojos();
   if(pageId === 'confirmacion') cargarConfirmaciones();
+  if(pageId === 'rendimiento') cargarRendimientoUnidades();
   if(pageId === 'hist-unidad') cargarHistorialUnidad();
   if(pageId === 'ajustes'){ cargarAjustes(); setTimeout(cargarCuentas, 400); }
   if(pageId === 'ajustes-sup') cargarPerfil();
@@ -2359,6 +2397,35 @@ function irAConfirmacionPendiente(){
   }, 400);
 }
 
+// ════════════ RENDIMIENTO POR UNIDAD ════════════
+async function cargarRendimientoUnidades(){
+  const tbody = document.getElementById('tbody-rendimiento');
+  if(!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-sub)">Cargando...</td></tr>';
+
+  const { data, error } = await supa.from('unidades')
+    .select('numero_eco, placas, tipo_combustible, km_recorrido_tipico, rendimiento_kml, rendimiento_notas, estaciones(nombre)')
+    .order('numero_eco', {ascending:true});
+
+  if(error || !data){ tbody.innerHTML = '<tr><td colspan="8" style="color:var(--rojo);padding:12px">Error al cargar.</td></tr>'; return; }
+
+  tbody.innerHTML = '';
+  data.forEach(u => {
+    const tr = document.createElement('tr');
+    const sinDato = !u.rendimiento_kml && !u.rendimiento_notas;
+    tr.innerHTML = `
+      <td><strong>${sanitize(u.numero_eco)}</strong></td>
+      <td>${sanitize(u.placas||'—')}</td>
+      <td>${sanitize(u.tipo_combustible||'—')}</td>
+      <td>${u.km_recorrido_tipico ? u.km_recorrido_tipico+' km' : '—'}</td>
+      <td>${u.rendimiento_kml ? '<strong>'+u.rendimiento_kml+' km/L</strong>' : (sinDato ? '<span style="color:var(--amarillo)">Sin dato</span>' : '—')}</td>
+      <td>—</td>
+      <td>—</td>
+      <td style="font-size:12px;color:var(--text-sub)">${sanitize(u.rendimiento_notas||'')}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
 // ════════════ NUEVA UNIDAD DE FLOTA ════════════
 function abrirModalNuevaUnidad(){
   document.getElementById('nu-eco').value = '';
@@ -2514,6 +2581,8 @@ function toggleKmNAFila(id){
   if(kmInput){ kmInput.disabled = na; if(na) kmInput.value=''; }
 }
 
+let confirmarPendienteData = null;
+
 async function guardarConfirmacionFila(id){
   const folio = document.getElementById('cf-folio-'+id)?.value.trim();
   const litros = parseFloat(document.getElementById('cf-litros-'+id)?.value);
@@ -2523,6 +2592,48 @@ async function guardarConfirmacionFila(id){
   if(!folio){ alert('⚠️ El folio del ticket es obligatorio.'); return; }
   if(!litros || litros <= 0){ alert('⚠️ Captura los litros realmente cargados.'); return; }
   if(!kmNA && (!km || km <= 0)){ alert('⚠️ Captura el KM real o marca "N/D" si el odómetro no funciona.'); return; }
+
+  confirmarPendienteData = { id, folio, litros, km, kmNA };
+
+  // Calcular sugerencia con justificación (datos duros) antes de confirmar
+  const { data: aut } = await supa.from('autorizaciones')
+    .select('unidad_id, odometro_ini, unidades(numero_eco, rendimiento_kml, rendimiento_notas)')
+    .eq('id', id).single();
+
+  let justificacion = '';
+  if(aut?.unidades?.rendimiento_notas){
+    justificacion = '⚙️ '+aut.unidades.rendimiento_notas+' — sin comparación de rendimiento disponible.';
+  } else if(aut?.unidades?.rendimiento_kml && km && aut.odometro_ini){
+    const kmRecorridos = km - aut.odometro_ini;
+    if(kmRecorridos > 0){
+      const litrosSugeridos = kmRecorridos / aut.unidades.rendimiento_kml;
+      const diff = litros - litrosSugeridos;
+      const diffTxt = diff > 0
+        ? ('<strong style="color:var(--rojo)">'+Math.abs(diff).toFixed(1)+' L más</strong> de lo esperado')
+        : ('<strong style="color:var(--verde)">'+Math.abs(diff).toFixed(1)+' L menos</strong> de lo esperado');
+      justificacion = '💡 Con '+kmRecorridos.toLocaleString('es-MX')+' km recorridos ÷ '+aut.unidades.rendimiento_kml
+        +' km/L de rendimiento histórico de '+sanitize(aut.unidades.numero_eco)+', lo esperado sería <strong>'
+        +litrosSugeridos.toFixed(1)+' L</strong>. Estás confirmando '+litros+' L — '+diffTxt+'.';
+    } else {
+      justificacion = 'No hay suficiente recorrido registrado para calcular una referencia de rendimiento.';
+    }
+  } else {
+    justificacion = 'Esta unidad aún no tiene un rendimiento de referencia cargado en el sistema.';
+  }
+
+  document.getElementById('mcg-justificacion').innerHTML = justificacion;
+  document.getElementById('mcg-resumen').textContent = folio+' — '+litros+' L'+(kmNA?' — odómetro no disponible':' — KM '+km);
+  document.getElementById('modal-confirmar-guardado').style.display = 'flex';
+}
+
+function cerrarModalConfirmarGuardado(){
+  document.getElementById('modal-confirmar-guardado').style.display = 'none';
+  confirmarPendienteData = null;
+}
+
+async function ejecutarGuardarConfirmacion(){
+  if(!confirmarPendienteData) return;
+  const { id, folio, litros, km, kmNA } = confirmarPendienteData;
 
   const { data: { session } } = await supa.auth.getSession();
   const email = session?.user?.email || 'desconocido';
@@ -2537,10 +2648,13 @@ async function guardarConfirmacionFila(id){
     confirmado_fecha: new Date().toISOString()
   }).eq('id', id);
 
+  document.getElementById('modal-confirmar-guardado').style.display = 'none';
+
   if(error){ alert('Error al guardar: '+error.message); return; }
 
   const row = document.getElementById('conf-row-'+id);
   if(row) row.remove();
+  confirmarPendienteData = null;
   cargarConfirmaciones(); // refresca conteo y badge
 }
 
@@ -3096,6 +3210,47 @@ function previewFoto(input){
 
 // ════════════ VALIDACIÓN ODÓMETRO ════════════
 let ultimoOdoUnidad = 0;
+let unidadSeleccionadaId = null;
+let unidadSeleccionadaEco = null;
+let rendimientoUnidadActual = null;
+let rendimientoNotasActual = null;
+
+// Calcula y muestra la sugerencia de litros con su justificación (datos duros)
+function actualizarSugerenciaLitros(){
+  const cont = document.getElementById('sugerencia-litros');
+  if(!cont) return;
+
+  if(rendimientoNotasActual){
+    cont.style.display = 'block';
+    cont.style.background = 'var(--gris-claro,#f0f0f0)';
+    cont.innerHTML = '⚙️ '+sanitize(rendimientoNotasActual);
+    return;
+  }
+
+  const odoInput = document.getElementById('a-odo');
+  const odoActual = parseFloat(odoInput?.value) || 0;
+
+  if(!rendimientoUnidadActual || !ultimoOdoUnidad || !odoActual || odoActual <= ultimoOdoUnidad){
+    cont.style.display = 'none';
+    return;
+  }
+
+  const kmRecorridos = odoActual - ultimoOdoUnidad;
+  const litrosSugeridos = kmRecorridos / rendimientoUnidadActual;
+
+  cont.style.display = 'block';
+  cont.style.background = 'var(--verde-tenue)';
+  cont.style.color = 'var(--verde-oscuro)';
+  cont.innerHTML = '💡 Sugerido: <strong>'+litrosSugeridos.toFixed(1)+' L</strong> — basado en '
+    + kmRecorridos.toLocaleString('es-MX')+' km recorridos ('+odoActual.toLocaleString('es-MX')+' − '+ultimoOdoUnidad.toLocaleString('es-MX')
+    + ') ÷ '+rendimientoUnidadActual+' km/L de rendimiento histórico de '+sanitize(unidadSeleccionadaEco||'esta unidad')
+    + '. <span style="cursor:pointer;text-decoration:underline;font-weight:700" onclick="usarLitrosSugeridos('+litrosSugeridos.toFixed(1)+')">Usar este valor</span>';
+}
+
+function usarLitrosSugeridos(valor){
+  const input = document.getElementById('a-litros');
+  if(input) input.value = valor;
+}
 
 async function calcAsig(){
   const val = document.getElementById('a-unidad').value;
@@ -3114,12 +3269,8 @@ async function calcAsig(){
   }
   if(!unidId) return;
 
-  // Verificar si hay carga pendiente de confirmar para esta unidad — bloqueo duro
-  const tienePendiente = await verificarConfirmacionPendiente(unidId, numeroEco);
-  if(tienePendiente){
-    document.getElementById('a-unidad').value = '';
-    return;
-  }
+  unidadSeleccionadaId = unidId;
+  unidadSeleccionadaEco = numeroEco;
 
   const { data: lastAut } = await supa.from('autorizaciones')
     .select('odometro_ini').eq('unidad_id', unidId)
@@ -3128,6 +3279,13 @@ async function calcAsig(){
   // Ocultar warning al cambiar de unidad
   const warn = document.getElementById('odo-warn');
   if(warn) warn.style.display='none';
+
+  // Traer rendimiento de la unidad para la sugerencia de litros
+  const { data: uRend } = await supa.from('unidades')
+    .select('rendimiento_kml, rendimiento_notas').eq('id', unidId).single();
+  rendimientoUnidadActual = uRend?.rendimiento_kml || null;
+  rendimientoNotasActual = uRend?.rendimiento_notas || null;
+  actualizarSugerenciaLitros();
 }
 
 // ════════════ CARGA ESPECIAL ════════════
@@ -4499,24 +4657,44 @@ async function descargarExcelConfirmacion(){
   if(!fechaIni||!fechaFin){ alert('⚠️ Selecciona el periodo.'); return; }
   try {
     const { data, error } = await supa.from('autorizaciones')
-      .select('fecha, operador, folio_ticket, litros_autorizados, litros_confirmados, odometro_ini, km_confirmado, km_no_disponible, unidades(numero_eco, placas), estaciones(nombre)')
+      .select('fecha, operador, folio_ticket, litros_autorizados, litros_confirmados, odometro_ini, km_confirmado, km_no_disponible, unidades(numero_eco, placas, rendimiento_kml, rendimiento_notas), estaciones(nombre)')
       .gte('fecha', fechaIni).lte('fecha', fechaFin)
       .order('fecha', {ascending:true});
 
     if(error || !data){ alert('Error: '+(error?.message||'sin datos')); return; }
 
-    const filas = data.map(r => ({
-      'BAK': r.unidades?.numero_eco || '—',
-      'FECHA': r.fecha,
-      'OPERADOR': r.operador || '—',
-      'PLACAS': r.unidades?.placas || '—',
-      'FOLIO TICKET': r.folio_ticket || '',
-      'LITROS': r.litros_confirmados || r.litros_autorizados || '',
-      'TOTAL': '',
-      'KM REGISTRADO EN BIOCOMBUSTIBLES': r.km_no_disponible ? 'ODÓMETRO NO FUNCIONA' : (r.km_confirmado || r.odometro_ini || ''),
-      'KM': '',
-      'ESTACION': r.estaciones?.nombre || '—'
-    }));
+    const filas = data.map(r => {
+      const litrosReales = r.litros_confirmados || r.litros_autorizados || 0;
+      const kmReal = r.km_confirmado || null;
+      const rend = r.unidades?.rendimiento_kml || null;
+      let litrosSugeridos = '';
+      let justificacion = '';
+      if(r.unidades?.rendimiento_notas){
+        justificacion = r.unidades.rendimiento_notas;
+      } else if(rend && kmReal && r.odometro_ini && kmReal > r.odometro_ini){
+        const kmRec = kmReal - r.odometro_ini;
+        litrosSugeridos = Math.round((kmRec/rend)*10)/10;
+        const diff = Math.round((litrosReales - litrosSugeridos)*10)/10;
+        justificacion = kmRec.toLocaleString('es-MX')+' km ÷ '+rend+' km/L histórico'
+          + (diff > 0 ? ' — se cargaron '+diff+' L de más' : diff < 0 ? ' — se cargaron '+Math.abs(diff)+' L de menos' : ' — coincide exacto');
+      } else {
+        justificacion = 'Sin datos suficientes para calcular sugerencia';
+      }
+      return {
+        'BAK': r.unidades?.numero_eco || '—',
+        'FECHA': r.fecha,
+        'OPERADOR': r.operador || '—',
+        'PLACAS': r.unidades?.placas || '—',
+        'FOLIO TICKET': r.folio_ticket || '',
+        'LITROS': litrosReales,
+        'LITROS SUGERIDOS (rendimiento)': litrosSugeridos,
+        'JUSTIFICACIÓN': justificacion,
+        'TOTAL': '',
+        'KM REGISTRADO EN BIOCOMBUSTIBLES': r.km_no_disponible ? 'ODÓMETRO NO FUNCIONA' : (r.km_confirmado || r.odometro_ini || ''),
+        'KM': '',
+        'ESTACION': r.estaciones?.nombre || '—'
+      };
+    });
 
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(filas);
@@ -4524,7 +4702,7 @@ async function descargarExcelConfirmacion(){
     // Resaltar en rojo las filas con odómetro no disponible
     const range = XLSX.utils.decode_range(ws['!ref']);
     for(let R = 1; R <= range.e.r; R++){
-      const cellAddr = XLSX.utils.encode_cell({r:R, c:7}); // columna KM REGISTRADO
+      const cellAddr = XLSX.utils.encode_cell({r:R, c:9}); // columna KM REGISTRADO
       const cell = ws[cellAddr];
       if(cell && cell.v === 'ODÓMETRO NO FUNCIONA'){
         if(!cell.s) cell.s = {};
