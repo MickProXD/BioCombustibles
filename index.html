@@ -2122,6 +2122,7 @@ function iniciarApp(email, rol, nombre){
   configurarUpdates(rol);
   if(rol === 'direccion') setTimeout(cargarDashboardCharts, 500);
   setTimeout(verificarBannerPlacas, 1200);
+  setTimeout(actualizarBadgeConfirmacionPasivo, 800); // sigue notificando aunque no bloquee
 
   // Pre-cargar nombre del supervisor en el formulario
   setTimeout(async () => {
@@ -2395,6 +2396,15 @@ function irAConfirmacionPendiente(){
       filtrarConfirmacionPorUnidad(unidadPendienteConfirmar.unidadId);
     }
   }, 400);
+}
+
+// ════════════ NOTIFICACIÓN PASIVA DE PENDIENTES (sin bloquear) ════════════
+async function actualizarBadgeConfirmacionPasivo(){
+  const { count, error } = await supa.from('autorizaciones')
+    .select('id', { count: 'exact', head: true })
+    .eq('confirmado', false);
+  if(error) return;
+  actualizarBadgeConfirmacion(count || 0);
 }
 
 // ════════════ RENDIMIENTO POR UNIDAD ════════════
